@@ -157,6 +157,13 @@ public final class Compiler {
   private static final String WINDOWS_ZIPALIGN_TOOL =
       "/tools/windows/zipalign";
 
+  private static final String LINUX_PROTOBUF_TOOL =
+      "/tools/linux/protoc";
+  private static final String MAC_PROTOBUF_TOOL =
+      "/tools/mac/protoc";
+  private static final String WINDOWS_PROTOBUF_TOOL =
+      "/tools/windows/protoc";
+
   @VisibleForTesting
   static final String YAIL_RUNTIME = RUNTIME_FILES_DIR + "runtime.scm";
 

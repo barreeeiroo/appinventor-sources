@@ -1159,7 +1159,9 @@ public final class Compiler {
     long start = System.currentTimeMillis();
 
     // Set initial progress to 0%
-    reporter.report(0);
+    if (reporter != null){
+      reporter.report(0);
+    }
 
     // Create a new compiler instance for the compilation
     Compiler compiler = new Compiler(project, compTypes, compBlocks, out, err, userErrors,

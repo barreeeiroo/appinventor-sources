@@ -55,11 +55,15 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.imageio.ImageIO;
+
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -1339,7 +1343,23 @@ public final class Compiler {
       reporter.report(85);
     }
 
-    // TODO: AAB things happen here
+    if (isAab) {
+      try {
+        AabCompiler aabCompiler = new AabCompiler(out, reporter);
+        aabCompiler.setStartTime(start);
+        Future<Boolean> aab = Executors.newFixedThreadPool(1).submit(
+            aabCompiler
+        );
+        if (aab.isDone()) {
+          return aab.get();
+        }
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+      return false;
+    }
+
+    // TODO: Code below this line should get refactored
 
     // Seal the apk with ApkBuilder
     out.println("________Invoking ApkBuilder");

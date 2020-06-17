@@ -1347,14 +1347,17 @@ public final class Compiler {
 
     if (isAab) {
       try {
-        AabCompiler aabCompiler = new AabCompiler(out, reporter);
+        AabCompiler aabCompiler = new AabCompiler(out, reporter, buildDir);
         aabCompiler.setStartTime(start);
-        Future<Boolean> aab = Executors.newFixedThreadPool(1).submit(
-            aabCompiler
-        );
-        if (aab.isDone()) {
-          return aab.get();
-        }
+        aabCompiler.setManifest(manifestFile.getAbsolutePath());
+        aabCompiler.setDexDir(dexedClassesDir);
+        aabCompiler.setResDir(resDir.getAbsolutePath());
+        aabCompiler.setAssetsDir(createDir(project.getBuildDirectory(), ASSET_DIR_NAME).getAbsolutePath());
+        aabCompiler.setLibsDir(createDir(buildDir, LIBS_DIR_NAME).getAbsolutePath());
+        Future<Boolean> aab = Executors.newSingleThreadExecutor().submit(aabCompiler);
+        out.println("_______BUILDING AAB");
+        System.out.println("_______BUILDING AAB");
+        return aab.get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }

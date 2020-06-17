@@ -24,8 +24,6 @@ public class AabCompiler implements Callable<Boolean> {
   private BuildServer.ProgressReporter reporter;
   private File buildDir;
 
-  private static final String SLASH = File.separator;
-
   private long start = 0;
   private String originalManifest = null;
   private String originalDexDir = null;
@@ -85,72 +83,11 @@ public class AabCompiler implements Callable<Boolean> {
     // Progress is at 85% now
 
     // First step: create the directory that will be zipped later, and start creating the AAB module layout
-    out("________Creating workable directory");
+    out("________Creating AAB structure");
     String AAB_DIR = "aab";
     File aabDir = createDir(buildDir, AAB_DIR);
-
-    File manifestDir = createDir(buildDir, AAB_DIR + SLASH + "manifest");
-    try {
-      Files.move(new File(originalManifest), new File(manifestDir, "AndroidManifest.xml"));
-    } catch (IOException e) {
-      e.printStackTrace();
+    if (!createStructure(aabDir)) {
       return false;
-    }
-
-    File dexDir = createDir(buildDir, AAB_DIR + SLASH + "dex");
-    File[] dexFiles = new File(originalDexDir).listFiles();
-    if (dexFiles != null) {
-      for (File dex : dexFiles) {
-        if (dex.isFile()) {
-          try {
-            Files.move(dex, new File(dexDir, dex.getName()));
-          } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-          }
-        }
-      }
-    }
-
-    File resDir = createDir(buildDir, AAB_DIR + SLASH + "res");
-    File[] resFiles = new File(originalResDir).listFiles();
-    if (resFiles != null) {
-      for (File res : resFiles) {
-        try {
-          Files.move(res, new File(resDir, res.getName()));
-        } catch (IOException e) {
-          e.printStackTrace();
-          return false;
-        }
-      }
-    }
-
-    File assetsDir = createDir(buildDir, AAB_DIR + SLASH + "assets");
-    File[] assetFiles = new File(originalAssetsDir).listFiles();
-    if (assetFiles != null) {
-      for (File asset : assetFiles) {
-        if (asset.isFile()) {
-          try {
-            Files.move(asset, new File(assetsDir, asset.getName()));
-          } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-          }
-        }
-      }
-    }
-
-    File libDir = createDir(buildDir, AAB_DIR + SLASH + "lib");
-    File[] libFiles = new File(originalLibsDir).listFiles();
-    if (libFiles != null) {
-      for (File lib : libFiles) {
-        try {
-          Files.move(lib, new File(libDir, lib.getName()));
-        } catch (IOException e) {
-          e.printStackTrace();
-          return false;
-        }
-      }
     }
 
     out("________Running Protobuf");
@@ -165,9 +102,77 @@ public class AabCompiler implements Callable<Boolean> {
       e.printStackTrace();
     }
 
+    if (reporter != null)
+      reporter.report(100);
     if (start != 0)
       out("Build finished in " + ((System.currentTimeMillis() - start) / 1000.0) + " seconds");
     return true;
+  }
+
+  private boolean createStructure(File aabDir) {
+    File manifestDir = createDir(aabDir, "manifest");
+    try {
+      Files.move(new File(originalManifest), new File(manifestDir, "AndroidManifest.xml"));
+    } catch (IOException e) {
+      e.printStackTrace();
+      return false;
+    }
+
+    File dexDir = createDir(aabDir, "dex");
+    File[] dexFiles = new File(originalDexDir).listFiles();
+    if (dexFiles != null) {
+      for (File dex : dexFiles) {
+        if (dex.isFile()) {
+          try {
+            Files.move(dex, new File(dexDir, dex.getName()));
+          } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+          }
+        }
+      }
+    }
+
+    File resDir = createDir(aabDir, "res");
+    File[] resFiles = new File(originalResDir).listFiles();
+    if (resFiles != null) {
+      for (File res : resFiles) {
+        try {
+          Files.move(res, new File(resDir, res.getName()));
+        } catch (IOException e) {
+          e.printStackTrace();
+          return false;
+        }
+      }
+    }
+
+    File assetsDir = createDir(aabDir, "assets");
+    File[] assetFiles = new File(originalAssetsDir).listFiles();
+    if (assetFiles != null) {
+      for (File asset : assetFiles) {
+        if (asset.isFile()) {
+          try {
+            Files.move(asset, new File(assetsDir, asset.getName()));
+          } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+          }
+        }
+      }
+    }
+
+    File libDir = createDir(aabDir, "lib");
+    File[] libFiles = new File(originalLibsDir).listFiles();
+    if (libFiles != null) {
+      for (File lib : libFiles) {
+        try {
+          Files.move(lib, new File(libDir, lib.getName()));
+        } catch (IOException e) {
+          e.printStackTrace();
+          return false;
+        }
+      }
+    }
   }
 
 }

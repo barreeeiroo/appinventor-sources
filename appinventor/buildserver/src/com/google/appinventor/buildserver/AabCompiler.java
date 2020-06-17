@@ -96,6 +96,7 @@ public class AabCompiler implements Callable<Boolean> {
 
     out("________Running bundletool");
 
+    // TODO: This is just added so compile process can be stopped and temporal files are been kept for debugging
     try {
       Thread.sleep(5000);
     } catch (InterruptedException e) {

@@ -174,7 +174,7 @@ public class AabCompiler implements Callable<Boolean> {
         }
       }
     }
-  }
 
-  return true;
+    return true;
+  }
 }

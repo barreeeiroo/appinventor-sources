@@ -5,6 +5,8 @@ import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -23,6 +25,7 @@ public class AabCompiler implements Callable<Boolean> {
   private PrintStream out;
   private BuildServer.ProgressReporter reporter;
   private File buildDir;
+  private int mx;
 
   private long start = 0;
   private String originalManifest = null;
@@ -31,14 +34,19 @@ public class AabCompiler implements Callable<Boolean> {
   private String originalAssetsDir = null;
   private String originalLibsDir = null;
 
-  public AabCompiler(PrintStream out, BuildServer.ProgressReporter reporter, File buildDir) {
+  private String aapt2 = null;
+  private String androidRuntime = null;
+
+  public AabCompiler(PrintStream out, BuildServer.ProgressReporter reporter, File buildDir, int mx) {
     assert out != null;
     assert reporter != null;
     assert buildDir != null;
+    assert mx > 0;
 
     this.out = out;
     this.reporter = reporter;
     this.buildDir = buildDir;
+    this.mx = mx;
   }
 
   private void out(String s) {
@@ -70,6 +78,14 @@ public class AabCompiler implements Callable<Boolean> {
     this.originalLibsDir = libsDir;
   }
 
+  public void setAapt2(String aapt2) {
+    this.aapt2 = aapt2;
+  }
+
+  public void setAndroidRuntime(String androidRuntime) {
+    this.androidRuntime = androidRuntime;
+  }
+
   private static File createDir(File parentDir, String name) {
     File dir = new File(parentDir, name);
     if (!dir.exists()) {
@@ -90,7 +106,10 @@ public class AabCompiler implements Callable<Boolean> {
       return false;
     }
 
-    out("________Running Protobuf");
+    out("________Generating AAB resources");
+    if (!generateResources(aabDir)) {
+      // return false;
+    }
 
     out("________Zipping Files");
 
@@ -98,7 +117,7 @@ public class AabCompiler implements Callable<Boolean> {
 
     // TODO: This is just added so compile process can be stopped and temporal files are been kept for debugging
     try {
-      Thread.sleep(5000);
+      Thread.sleep(10000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -112,12 +131,13 @@ public class AabCompiler implements Callable<Boolean> {
 
   private boolean createStructure(File aabDir) {
     File manifestDir = createDir(aabDir, "manifest");
+    /* File manifest = new File(manifestDir, "AndroidManifest.xml");
     try {
-      Files.move(new File(originalManifest), new File(manifestDir, "AndroidManifest.xml"));
+      Files.move(new File(originalManifest), manifest);
     } catch (IOException e) {
       e.printStackTrace();
       return false;
-    }
+    } */
 
     File dexDir = createDir(aabDir, "dex");
     File[] dexFiles = new File(originalDexDir).listFiles();
@@ -134,18 +154,8 @@ public class AabCompiler implements Callable<Boolean> {
       }
     }
 
-    File resDir = createDir(aabDir, "res");
-    File[] resFiles = new File(originalResDir).listFiles();
-    if (resFiles != null) {
-      for (File res : resFiles) {
-        try {
-          Files.move(res, new File(resDir, res.getName()));
-        } catch (IOException e) {
-          e.printStackTrace();
-          return false;
-        }
-      }
-    }
+    // Resources are linked in the AAPT2 step
+    createDir(aabDir, "res");
 
     File assetsDir = createDir(aabDir, "assets");
     File[] assetFiles = new File(originalAssetsDir).listFiles();
@@ -176,5 +186,68 @@ public class AabCompiler implements Callable<Boolean> {
     }
 
     return true;
+  }
+
+  private boolean generateResources(File aabDir) {
+    File compiledResourcesDir = createDir(new File(aabDir + File.separator + ".."), "res_compiled");
+    List<String> aapt2CommandLine = new ArrayList<>();
+    aapt2CommandLine.add(this.aapt2);
+    aapt2CommandLine.add("compile");
+    aapt2CommandLine.addAll(Filewalker.walk(originalResDir));
+    aapt2CommandLine.add("-o");
+    aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
+    String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
+
+    if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
+      return false;
+    }
+
+    if (!linkResources(aabDir, originalManifest, compiledResourcesDir)) {
+      return false;
+    }
+    return true;
+  }
+
+  private boolean linkResources(File aabDir, String manifest, File compiledResourcesDir) {
+    List<String> aapt2CommandLine = new ArrayList<String>();
+    aapt2CommandLine.add(this.aapt2);
+    aapt2CommandLine.add("link");
+    aapt2CommandLine.add("--proto-format");
+    aapt2CommandLine.add("-o");
+    aapt2CommandLine.add(new File(aabDir, "output.apk").getAbsolutePath());
+    aapt2CommandLine.add("-I");
+    aapt2CommandLine.add(androidRuntime);
+    for (String file : Filewalker.walk(compiledResourcesDir.getAbsolutePath())) {
+      aapt2CommandLine.add("-R");
+      aapt2CommandLine.add(file);
+    }
+    aapt2CommandLine.add("--manifest");
+    aapt2CommandLine.add(manifest);
+    aapt2CommandLine.add("--auto-add-overlay");
+    String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
+    if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
+      return false;
+    }
+    return true;
+  }
+
+  private static class Filewalker {
+    public static List<String> walk(String path) {
+      List<String> files = new ArrayList<>();
+
+      File root = new File(path);
+      File[] list = root.listFiles();
+
+      if (list == null) return files;
+      for (File f : list) {
+        if (f.isDirectory()) {
+          files.addAll(walk(f.getAbsolutePath()));
+        } else {
+          System.out.println(f.getAbsolutePath());
+          files.add(f.getAbsolutePath());
+        }
+      }
+      return files;
+    }
   }
 }

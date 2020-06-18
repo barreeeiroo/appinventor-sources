@@ -161,12 +161,12 @@ public final class Compiler {
   private static final String WINDOWS_ZIPALIGN_TOOL =
       "/tools/windows/zipalign";
 
-  private static final String LINUX_PROTOBUF_TOOL =
-      "/tools/linux/protoc";
-  private static final String MAC_PROTOBUF_TOOL =
-      "/tools/mac/protoc";
-  private static final String WINDOWS_PROTOBUF_TOOL =
-      "/tools/windows/protoc";
+  private static final String LINUX_AAPT2_TOOL =
+      "/tools/linux/aapt2";
+  private static final String MAC_AAPT2_TOOL =
+      "/tools/mac/aapt2";
+  private static final String WINDOWS_AAPT2_TOOL =
+      "/tools/windows/aapt2";
 
   @VisibleForTesting
   static final String YAIL_RUNTIME = RUNTIME_FILES_DIR + "runtime.scm";
@@ -621,24 +621,24 @@ public final class Compiler {
     out.write("\" parent=\"");
     out.write(parent);
     out.write("\">\n");
-    out.write("<item name=\"colorPrimary\">@color/colorPrimary</item>\n");
-    out.write("<item name=\"colorPrimaryDark\">@color/colorPrimaryDark</item>\n");
-    out.write("<item name=\"colorAccent\">@color/colorAccent</item>\n");
+    out.write("<item type=\"attr\" name=\"colorPrimary\">@color/colorPrimary</item>\n");
+    out.write("<item type=\"attr\" name=\"colorPrimaryDark\">@color/colorPrimaryDark</item>\n");
+    out.write("<item type=\"attr\" name=\"colorAccent\">@color/colorAccent</item>\n");
     boolean holo = sdk >= 11 && sdk < 21;
     boolean needsClassicSwitch = false;
     if (!parent.equals("android:Theme")) {
-      out.write("<item name=\"windowActionBar\">true</item>\n");
+      out.write("<item type=\"attr\" name=\"windowActionBar\">true</item>\n");
       out.write("<item name=\"android:windowActionBar\">true</item>\n");  // Honeycomb ActionBar
       if (parent.contains("Holo") || holo) {
         out.write("<item name=\"android:actionBarStyle\">@style/AIActionBar</item>\n");
-        out.write("<item name=\"actionBarStyle\">@style/AIActionBar</item>\n");
+        out.write("<item type=\"attr\" name=\"actionBarStyle\">@style/AIActionBar</item>\n");
       }
       // Handles theme for Notifier
       out.write("<item name=\"android:dialogTheme\">@style/AIDialog</item>\n");
       out.write("<item name=\"dialogTheme\">@style/AIDialog</item>\n");
       out.write("<item name=\"android:cacheColorHint\">#000</item>\n");  // Fixes crash in ListPickerActivity
     } else {
-      out.write("<item name=\"switchStyle\">@style/ClassicSwitch</item>\n");
+      out.write("<item type=\"attr\" name=\"switchStyle\">@style/ClassicSwitch</item>\n");
       needsClassicSwitch = true;
     }
     out.write("</style>\n");
@@ -674,9 +674,9 @@ public final class Compiler {
     out.write("\" parent=\"");
     out.write(parent);
     out.write("\">\n");
-    out.write("<item name=\"colorPrimary\">@color/colorPrimary</item>\n");
-    out.write("<item name=\"colorPrimaryDark\">@color/colorPrimaryDark</item>\n");
-    out.write("<item name=\"colorAccent\">@color/colorAccent</item>\n");
+    out.write("<item type=\"attr\" name=\"colorPrimary\">@color/colorPrimary</item>\n");
+    out.write("<item type=\"attr\" name=\"colorPrimaryDark\">@color/colorPrimaryDark</item>\n");
+    out.write("<item type=\"attr\" name=\"colorAccent\">@color/colorAccent</item>\n");
     if (parent.contains("Holo")) {
       // workaround for weird window border effect
       out.write("<item name=\"android:windowBackground\">@android:color/transparent</item>\n");
@@ -725,17 +725,18 @@ public final class Compiler {
     colorAccent = cleanColor(colorAccent, true);
     File colorsXml = new File(valuesDir, "colors" + suffix + ".xml");
     File stylesXml = new File(valuesDir, "styles" + suffix + ".xml");
+    File attrsXml = new File(valuesDir, "attrs" + suffix + ".xml");
     try {
       BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(colorsXml), "UTF-8"));
       out.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
       out.write("<resources>\n");
-      out.write("<color name=\"colorPrimary\">");
+      out.write("<color type=\"attr\" name=\"colorPrimary\">");
       out.write(colorPrimary);
       out.write("</color>\n");
-      out.write("<color name=\"colorPrimaryDark\">");
+      out.write("<color type=\"attr\" name=\"colorPrimaryDark\">");
       out.write(colorPrimaryDark);
       out.write("</color>\n");
-      out.write("<color name=\"colorAccent\">");
+      out.write("<color type=\"attr\" name=\"colorAccent\">");
       out.write(colorAccent);
       out.write("</color>\n");
       out.write("</resources>\n");
@@ -762,10 +763,25 @@ public final class Compiler {
           writeDialogTheme(out, "AIAlertDialog", "Theme.AppCompat.Dialog.Alert");
         }
       }
-
       out.write("<style name=\"TextAppearance.AppCompat.Button\">\n");
-      out.write("<item name=\"textAllCaps\">false</item>\n");
+      out.write("<item type=\"attr\" name=\"textAllCaps\">false</item>\n");
       out.write("</style>\n");
+      out.write("</resources>\n");
+      out.close();
+
+      out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attrsXml), "UTF-8"));
+      out.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
+      out.write("<resources>\n");
+      out.write("<declare-styleable name=\"Theme\">\n");
+      out.write("<attr name=\"colorPrimary\" format=\"color\" />\n");
+      out.write("<attr name=\"colorPrimaryDark\" format=\"color\" />\n");
+      out.write("<attr name=\"colorAccent\" format=\"color\" />\n");
+      out.write("<attr name=\"switchStyle\" format=\"reference\" />\n");
+      out.write("<attr name=\"windowActionBar\" format=\"boolean\" />\n");
+      out.write("<attr name=\"actionBarStyle\" format=\"reference\" />\n");
+      out.write("<attr name=\"dialogTheme\" format=\"reference\" />\n");
+      out.write("<attr name=\"textAllCaps\" format=\"boolean\" />\n");
+      out.write("</declare-styleable>\n");
       out.write("</resources>\n");
       out.close();
     } catch(IOException e) {
@@ -1347,13 +1363,32 @@ public final class Compiler {
 
     if (isAab) {
       try {
-        AabCompiler aabCompiler = new AabCompiler(out, reporter, buildDir);
+        AabCompiler aabCompiler = new AabCompiler(out, reporter, buildDir, childProcessRam - 200);
         aabCompiler.setStartTime(start);
         aabCompiler.setManifest(manifestFile.getAbsolutePath());
         aabCompiler.setDexDir(dexedClassesDir);
         aabCompiler.setResDir(resDir.getAbsolutePath());
         aabCompiler.setAssetsDir(createDir(project.getBuildDirectory(), ASSET_DIR_NAME).getAbsolutePath());
         aabCompiler.setLibsDir(createDir(buildDir, LIBS_DIR_NAME).getAbsolutePath());
+
+        String osName = System.getProperty("os.name");
+        String aapt2Tool;
+        if (osName.equals("Mac OS X")) {
+          aapt2Tool = MAC_AAPT2_TOOL;
+        } else if (osName.equals("Linux")) {
+          aapt2Tool = LINUX_AAPT2_TOOL;
+        } else if (osName.startsWith("Windows")) {
+          aapt2Tool = WINDOWS_AAPT2_TOOL;
+        } else {
+          LOG.warning("YAIL compiler - cannot run AAPT2 on OS " + osName);
+          err.println("YAIL compiler - cannot run AAPT2 on OS " + osName);
+          userErrors.print(String.format(ERROR_IN_STAGE, "AAPT2"));
+          return false;
+        }
+        aabCompiler.setAapt2(getResource(aapt2Tool));
+
+        aabCompiler.setAndroidRuntime(getResource(ANDROID_RUNTIME));
+
         Future<Boolean> aab = Executors.newSingleThreadExecutor().submit(aabCompiler);
         out.println("_______BUILDING AAB");
         System.out.println("_______BUILDING AAB");

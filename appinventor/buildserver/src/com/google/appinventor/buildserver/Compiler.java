@@ -780,7 +780,7 @@ public final class Compiler {
       out.write("<attr name=\"windowActionBar\" format=\"boolean\" />\n");
       out.write("<attr name=\"actionBarStyle\" format=\"reference\" />\n");
       out.write("<attr name=\"dialogTheme\" format=\"reference\" />\n");
-      out.write("<attr name=\"textAllCaps\" format=\"boolean\" />\n");
+      out.write("<attr name=\"textAllCaps\" />\n");
       out.write("</declare-styleable>\n");
       out.write("</resources>\n");
       out.close();

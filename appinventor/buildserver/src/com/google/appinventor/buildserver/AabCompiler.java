@@ -244,7 +244,8 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add("-I");
     aapt2CommandLine.add(androidRuntime);
     aapt2CommandLine.add("-R");
-    aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
+    aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath() + File.separator + "*.flat");
+    // aapt2CommandLine.add(originalRJavaDir + File.separator + "R.txt");
     aapt2CommandLine.add("--manifest");
     aapt2CommandLine.add(manifest);
     aapt2CommandLine.add("--auto-add-overlay");

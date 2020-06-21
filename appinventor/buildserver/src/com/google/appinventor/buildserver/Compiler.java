@@ -1371,7 +1371,7 @@ public final class Compiler {
         aabCompiler.setDexDir(dexedClassesDir);
         aabCompiler.setResDir(resDir.getAbsolutePath());
         aabCompiler.setMergedResDir(compiler.mergedResDir.getAbsolutePath());
-        aabCompiler.setRJavaDir(rJavaDir);
+        aabCompiler.setOriginalRJavaDir(rJavaDir.getAbsolutePath());
         aabCompiler.setAssetsDir(createDir(project.getBuildDirectory(), ASSET_DIR_NAME).getAbsolutePath());
         aabCompiler.setLibsDir(createDir(buildDir, LIBS_DIR_NAME).getAbsolutePath());
 

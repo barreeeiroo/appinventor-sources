@@ -31,6 +31,8 @@ public class AabCompiler implements Callable<Boolean> {
   private String originalManifest = null;
   private String originalDexDir = null;
   private String originalResDir = null;
+  private String originalMergedResDir = null;
+  private String originalRJavaDir = null;
   private String originalAssetsDir = null;
   private String originalLibsDir = null;
 
@@ -68,6 +70,14 @@ public class AabCompiler implements Callable<Boolean> {
 
   public void setResDir(String resDir) {
     this.originalResDir = resDir;
+  }
+
+  public void setMergedResDir(String mergedResDir) {
+    this.originalMergedResDir = mergedResDir;
+  }
+
+  public void setOriginalRJavaDir(String originalRJavaDir) {
+    this.originalRJavaDir = originalRJavaDir;
   }
 
   public void setAssetsDir(String assetsDir) {
@@ -190,17 +200,33 @@ public class AabCompiler implements Callable<Boolean> {
 
   private boolean generateResources(File aabDir) {
     File compiledResourcesDir = createDir(new File(aabDir + File.separator + ".."), "res_compiled");
-    List<String> aapt2CommandLine = new ArrayList<>();
+    int packSize = 75;
+    List<String> resources = Filewalker.walk(originalMergedResDir);
+    for (int i = 0; i < resources.size(); i = i + 10) {
+      List<String> aapt2CommandLine = new ArrayList<>();
+      aapt2CommandLine.add(this.aapt2);
+      aapt2CommandLine.add("compile");
+      for (int j = 0; j < packSize && (i + j) < resources.size(); j++) {
+        aapt2CommandLine.add(resources.get(i + j));
+      }
+      aapt2CommandLine.add("-o");
+      aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
+      String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
+      if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
+        return false;
+      }
+    }
+
+    /* List<String> aapt2CommandLine = new ArrayList<>();
     aapt2CommandLine.add(this.aapt2);
     aapt2CommandLine.add("compile");
-    aapt2CommandLine.addAll(Filewalker.walk(originalResDir));
+    aapt2CommandLine.addAll(Filewalker.walk(this.originalResDir));
     aapt2CommandLine.add("-o");
     aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
     String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
-
     if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
       return false;
-    }
+    } */
 
     if (!linkResources(aabDir, originalManifest, compiledResourcesDir)) {
       return false;
@@ -217,10 +243,8 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add(new File(aabDir, "output.apk").getAbsolutePath());
     aapt2CommandLine.add("-I");
     aapt2CommandLine.add(androidRuntime);
-    for (String file : Filewalker.walk(compiledResourcesDir.getAbsolutePath())) {
-      aapt2CommandLine.add("-R");
-      aapt2CommandLine.add(file);
-    }
+    aapt2CommandLine.add("-R");
+    aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
     aapt2CommandLine.add("--manifest");
     aapt2CommandLine.add(manifest);
     aapt2CommandLine.add("--auto-add-overlay");

@@ -3,12 +3,16 @@ package com.google.appinventor.buildserver;
 import com.google.common.io.Files;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * This Callable class will convert the compiled files into an Android App Bundle.
@@ -37,16 +41,95 @@ public class AabCompiler implements Callable<Boolean> {
   private String originalLibsDir = null;
 
   private String aapt2 = null;
+  private String bundletool = null;
+
   private String androidRuntime = null;
+  public String deploy = null;
 
-  private static class AabPaths {
-    public File ROOT = null;
+  private class AabPaths {
+    private File ROOT = null;
+    private File BASE = null;
 
-    public File assetsDir = null;
-    public File dexDir = null;
-    public File libDir = null;
-    public File manifestDir = null;
-    public File resDir = null;
+    private File assetsDir = null;
+    private File dexDir = null;
+    private File libDir = null;
+    private File manifestDir = null;
+    private File resDir = null;
+
+    private File protoApk = null;
+    private File resZip = null;
+
+    public File getROOT() {
+      return ROOT;
+    }
+
+    public void setROOT(File ROOT) {
+      this.ROOT = ROOT;
+    }
+
+    public File getBASE() {
+      return BASE;
+    }
+
+    public void setBASE(File BASE) {
+      this.BASE = BASE;
+    }
+
+    public File getAssetsDir() {
+      return assetsDir;
+    }
+
+    public void setAssetsDir(File assetsDir) {
+      this.assetsDir = assetsDir;
+    }
+
+    public File getDexDir() {
+      return dexDir;
+    }
+
+    public void setDexDir(File dexDir) {
+      this.dexDir = dexDir;
+    }
+
+    public File getLibDir() {
+      return libDir;
+    }
+
+    public void setLibDir(File libDir) {
+      this.libDir = libDir;
+    }
+
+    public File getManifestDir() {
+      return manifestDir;
+    }
+
+    public void setManifestDir(File manifestDir) {
+      this.manifestDir = manifestDir;
+    }
+
+    public File getResDir() {
+      return resDir;
+    }
+
+    public void setResDir(File resDir) {
+      this.resDir = resDir;
+    }
+
+    public File getProtoApk() {
+      return protoApk;
+    }
+
+    public void setProtoApk(File protoApk) {
+      this.protoApk = protoApk;
+    }
+
+    public File getResZip() {
+      return resZip;
+    }
+
+    public void setResZip(File resZip) {
+      this.resZip = resZip;
+    }
   }
 
   public AabCompiler(PrintStream out, BuildServer.ProgressReporter reporter, File buildDir, int mx) {
@@ -100,6 +183,14 @@ public class AabCompiler implements Callable<Boolean> {
     this.androidRuntime = androidRuntime;
   }
 
+  public void setBundletool(String bundletool) {
+    this.bundletool = bundletool;
+  }
+
+  public void setDeploy(String deploy) {
+    this.deploy = deploy;
+  }
+
   private static File createDir(File parentDir, String name) {
     File dir = new File(parentDir, name);
     if (!dir.exists()) {
@@ -114,21 +205,30 @@ public class AabCompiler implements Callable<Boolean> {
 
     // First step: create the directory that will be zipped later, and start creating the AAB module layout
     out("________Creating AAB structure");
-    String AAB_DIR = "aab";
-    File aabDir = createDir(buildDir, AAB_DIR);
-    if (!createStructure(aabDir)) {
+    aab.setROOT(createDir(buildDir, "aab"));
+    if (!createStructure()) {
       return false;
     }
-    aab.ROOT = aabDir;
 
     out("________Generating AAB resources");
-    if (!generateResources(aabDir)) {
-      // return false;
+    if (!generateResources()) {
+      return false;
     }
 
-    out("________Zipping Files");
+    out("___________Linking AAB resources");
+    if (!linkResources()) {
+      return false;
+    }
+
+    out("___________Extracting protobuf resources");
+    if (!extractProtobuf()) {
+      return false;
+    }
 
     out("________Running bundletool");
+    if (!bundletool()) {
+      // return false;
+    }
 
     // TODO: This is just added so compile process can be stopped and temporal files are been kept for debugging
     try {
@@ -144,17 +244,17 @@ public class AabCompiler implements Callable<Boolean> {
     return true;
   }
 
-  private boolean createStructure(File aabDir) {
-    aab.manifestDir = createDir(aabDir, "manifest");
-    /* File manifest = new File(aab.manifestDir, "AndroidManifest.xml");
-    try {
-      Files.move(new File(originalManifest), manifest);
-    } catch (IOException e) {
-      e.printStackTrace();
-      return false;
-    } */
+  private boolean createStructure() {
+    // Manifest is extracted from the protobuf APK
+    aab.setManifestDir(createDir(aab.ROOT, "manifest"));
 
-    aab.dexDir = createDir(aabDir, "dex");
+    // Resources are extracted from the protobuf APK
+    aab.setResDir(createDir(aab.ROOT, "res"));
+
+    // Assets are extracted from the protobuf APK
+    aab.setAssetsDir(createDir(aab.ROOT, "assets"));
+
+    aab.setDexDir(createDir(aab.ROOT, "dex"));
     File[] dexFiles = new File(originalDexDir).listFiles();
     if (dexFiles != null) {
       for (File dex : dexFiles) {
@@ -169,30 +269,12 @@ public class AabCompiler implements Callable<Boolean> {
       }
     }
 
-    // Resources are linked in the AAPT2 step
-    aab.resDir = createDir(aabDir, "res");
-
-    aab.assetsDir = createDir(aabDir, "assets");
-    /* File[] assetFiles = new File(originalAssetsDir).listFiles();
-    if (assetFiles != null) {
-      for (File asset : assetFiles) {
-        if (asset.isFile()) {
-          try {
-            Files.move(asset, new File(assetsDir, asset.getName()));
-          } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-          }
-        }
-      }
-    } */
-
-    aab.libDir = createDir(aabDir, "lib");
+    aab.setLibDir(createDir(aab.ROOT, "lib"));
     File[] libFiles = new File(originalLibsDir).listFiles();
     if (libFiles != null) {
       for (File lib : libFiles) {
         try {
-          Files.move(lib, new File(aab.libDir, lib.getName()));
+          Files.move(lib, new File(createDir(aab.ROOT, "lib"), lib.getName()));
         } catch (IOException e) {
           e.printStackTrace();
           return false;
@@ -203,46 +285,8 @@ public class AabCompiler implements Callable<Boolean> {
     return true;
   }
 
-  private boolean generateResources(File aabDir) {
-    /* File compiledResourcesDir = createDir(new File(aabDir + File.separator + ".."), "res_compiled");
-    int packSize = 100;
-    List<String> resources = Filewalker.walk(originalResDir);
-    for (int i = 0; i < resources.size(); i = i + 10) {
-      List<String> aapt2CommandLine = new ArrayList<>();
-      aapt2CommandLine.add(this.aapt2);
-      aapt2CommandLine.add("compile");
-      for (int j = 0; j < packSize && (i + j) < resources.size(); j++) {
-        aapt2CommandLine.add(resources.get(i + j));
-      }
-      aapt2CommandLine.add("-o");
-      aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
-      aapt2CommandLine.add("-v");
-      String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
-      if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
-        return false;
-      }
-    } */
-
-    /* for (File f1 : Objects.requireNonNull(new File(originalResDir).listFiles())) {
-      List<String> aapt2CommandLine = new ArrayList<>();
-      aapt2CommandLine.add(this.aapt2);
-      aapt2CommandLine.add("compile");
-      if (f1.isFile()) {
-        // Is this even possible?
-        aapt2CommandLine.add(f1.getAbsolutePath());
-      } else {
-        for (File f2 : Objects.requireNonNull(f1.listFiles())) {
-          aapt2CommandLine.add(f2.getAbsolutePath());
-        }
-      }
-      aapt2CommandLine.add("-o");
-      aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
-      aapt2CommandLine.add("-v");
-      String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
-      if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
-        return false;
-      }
-    } */
+  private boolean generateResources() {
+    aab.setResZip(new File(aab.getROOT().getAbsolutePath(), "resources.zip"));
 
     List<String> aapt2CommandLine = new ArrayList<>();
     aapt2CommandLine.add(this.aapt2);
@@ -250,31 +294,27 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add("--dir");
     aapt2CommandLine.add(originalResDir);
     aapt2CommandLine.add("-o");
-    aapt2CommandLine.add(aabDir.getAbsolutePath() + File.separator + "resources.zip");
+    aapt2CommandLine.add(aab.getResZip().getAbsolutePath());
     aapt2CommandLine.add("--no-crunch");
     aapt2CommandLine.add("-v");
-    String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
-    if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
-      return false;
-    }
-    if (!linkResources(aabDir)) {
-      return false;
-    }
-    return true;
+    String[] aapt2CompileCommandLine = aapt2CommandLine.toArray(new String[0]);
+
+    return Execution.execute(null, aapt2CompileCommandLine, System.out, System.err);
   }
 
-  private boolean linkResources(File aabDir) {
+  private boolean linkResources() {
+    aab.setProtoApk(new File(aab.getROOT().getAbsolutePath(), "output.apk"));
+
     List<String> aapt2CommandLine = new ArrayList<String>();
     aapt2CommandLine.add(this.aapt2);
     aapt2CommandLine.add("link");
     aapt2CommandLine.add("--proto-format");
     aapt2CommandLine.add("-o");
-    aapt2CommandLine.add(new File(aabDir, "output.apk").getAbsolutePath());
+    aapt2CommandLine.add(aab.getProtoApk().getAbsolutePath());
     aapt2CommandLine.add("-I");
     aapt2CommandLine.add(androidRuntime);
     aapt2CommandLine.add("-R");
-    aapt2CommandLine.add(aabDir.getAbsolutePath() + File.separator + "resources.zip");
-    // aapt2CommandLine.add(originalRJavaDir + File.separator + "R.txt");
+    aapt2CommandLine.add(aab.getResZip().getAbsolutePath());
     aapt2CommandLine.add("-A");
     aapt2CommandLine.add(originalAssetsDir);
     aapt2CommandLine.add("--manifest");
@@ -284,30 +324,64 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add("--no-auto-version");
     aapt2CommandLine.add("--no-version-transitions");
     aapt2CommandLine.add("--no-resource-deduping");
-    String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
-    if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
-      return false;
-    }
-    return true;
+    String[] aapt2LinkCommandLine = aapt2CommandLine.toArray(new String[0]);
+
+    return Execution.execute(null, aapt2LinkCommandLine, System.out, System.err);
   }
 
-  private static class Filewalker {
-    public static List<String> walk(String path) {
-      List<String> files = new ArrayList<>();
+  private boolean extractProtobuf() {
+    try (ZipInputStream is = new ZipInputStream(new FileInputStream(aab.getProtoApk()))) {
+      ZipEntry entry;
+      byte[] buffer = new byte[1024];
+      while ((entry = is.getNextEntry()) != null) {
+        String n = entry.getName();
+        File f = null;
+        if (n.equals("AndroidManifest.xml")) {
+          f = new File(aab.getManifestDir(), n);
+        } else if (n.equals("resources.pb")) {
+          f = new File(aab.getROOT(), n);
+        } else if (n.startsWith("assets")) {
+          f = new File(aab.getAssetsDir(), n.substring(("assets").length()));
+        } else if (n.startsWith("res")) {
+          f = new File(aab.getResDir(), n.substring(("res").length()));
+        }
 
-      File root = new File(path);
-      File[] list = root.listFiles();
-
-      if (list == null) return files;
-      for (File f : list) {
-        if (f.isDirectory()) {
-          files.addAll(walk(f.getAbsolutePath()));
-        } else {
-          System.out.println(f.getAbsolutePath());
-          files.add(f.getAbsolutePath());
+        if (f != null) {
+          f.getParentFile().mkdirs();
+          FileOutputStream fos = new FileOutputStream(f);
+          int len;
+          while ((len = is.read(buffer)) > 0) {
+            fos.write(buffer, 0, len);
+          }
+          fos.close();
         }
       }
-      return files;
+
+      is.close();
+      return aab.getResZip().delete() && aab.getProtoApk().delete();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+    return false;
+  }
+
+  private boolean bundletool() {
+    aab.setBASE(new File(buildDir, "base.zip"));
+
+    if (!AabZipper.zipBundle(aab.getROOT(), aab.getBASE(), aab.getROOT().getName() + File.separator)) {
+      return false;
+    }
+
+    List<String> bundletoolCommandLine = new ArrayList<String>();
+    bundletoolCommandLine.add(System.getProperty("java.home") + "/bin/java");
+    bundletoolCommandLine.add("-jar");
+    bundletoolCommandLine.add("-mx" + mx + "M");
+    bundletoolCommandLine.add(bundletool);
+    bundletoolCommandLine.add("build-bundle");
+    bundletoolCommandLine.add("--modules=\"" + aab.getBASE() + "\"");
+    bundletoolCommandLine.add("--output=\"" + deploy + "\"");
+    String[] bundletoolBuildCommandLine = bundletoolCommandLine.toArray(new String[0]);
+
+    return Execution.execute(null, bundletoolBuildCommandLine, System.out, System.err);
   }
 }

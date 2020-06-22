@@ -167,6 +167,8 @@ public final class Compiler {
       "/tools/mac/aapt2";
   private static final String WINDOWS_AAPT2_TOOL =
       "/tools/windows/aapt2";
+  private static final String BUNDLETOOL_JAR =
+      RUNTIME_FILES_DIR + "bundletool.jar";
 
   @VisibleForTesting
   static final String YAIL_RUNTIME = RUNTIME_FILES_DIR + "runtime.scm";
@@ -1369,8 +1371,14 @@ public final class Compiler {
           return false;
         }
         aabCompiler.setAapt2(getResource(aapt2Tool));
+        aabCompiler.setBundletool(getResource(BUNDLETOOL_JAR));
 
         aabCompiler.setAndroidRuntime(getResource(ANDROID_RUNTIME));
+        String fileName = outputFileName;
+        if (fileName == null) {
+          fileName = project.getProjectName() + ".aab";
+        }
+        aabCompiler.setDeploy(deployDir.getAbsolutePath() + SLASH + fileName);
 
         Future<Boolean> aab = Executors.newSingleThreadExecutor().submit(aabCompiler);
         out.println("_______BUILDING AAB");

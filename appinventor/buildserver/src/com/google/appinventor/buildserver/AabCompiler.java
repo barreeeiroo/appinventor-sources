@@ -280,6 +280,10 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add("--manifest");
     aapt2CommandLine.add(originalManifest);
     aapt2CommandLine.add("--auto-add-overlay");
+    aapt2CommandLine.add("--no-version-vectors");
+    aapt2CommandLine.add("--no-auto-version");
+    aapt2CommandLine.add("--no-version-transitions");
+    aapt2CommandLine.add("--no-resource-deduping");
     String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
     if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
       return false;

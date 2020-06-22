@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 /**
@@ -27,17 +28,26 @@ public class AabCompiler implements Callable<Boolean> {
   private File buildDir;
   private int mx;
 
+  private AabPaths aab;
   private long start = 0;
   private String originalManifest = null;
   private String originalDexDir = null;
   private String originalResDir = null;
-  private String originalMergedResDir = null;
-  private String originalRJavaDir = null;
   private String originalAssetsDir = null;
   private String originalLibsDir = null;
 
   private String aapt2 = null;
   private String androidRuntime = null;
+
+  private static class AabPaths {
+    public File ROOT = null;
+
+    public File assetsDir = null;
+    public File dexDir = null;
+    public File libDir = null;
+    public File manifestDir = null;
+    public File resDir = null;
+  }
 
   public AabCompiler(PrintStream out, BuildServer.ProgressReporter reporter, File buildDir, int mx) {
     assert out != null;
@@ -49,6 +59,8 @@ public class AabCompiler implements Callable<Boolean> {
     this.reporter = reporter;
     this.buildDir = buildDir;
     this.mx = mx;
+
+    aab = new AabPaths();
   }
 
   private void out(String s) {
@@ -70,14 +82,6 @@ public class AabCompiler implements Callable<Boolean> {
 
   public void setResDir(String resDir) {
     this.originalResDir = resDir;
-  }
-
-  public void setMergedResDir(String mergedResDir) {
-    this.originalMergedResDir = mergedResDir;
-  }
-
-  public void setOriginalRJavaDir(String originalRJavaDir) {
-    this.originalRJavaDir = originalRJavaDir;
   }
 
   public void setAssetsDir(String assetsDir) {
@@ -115,6 +119,7 @@ public class AabCompiler implements Callable<Boolean> {
     if (!createStructure(aabDir)) {
       return false;
     }
+    aab.ROOT = aabDir;
 
     out("________Generating AAB resources");
     if (!generateResources(aabDir)) {
@@ -140,8 +145,8 @@ public class AabCompiler implements Callable<Boolean> {
   }
 
   private boolean createStructure(File aabDir) {
-    File manifestDir = createDir(aabDir, "manifest");
-    /* File manifest = new File(manifestDir, "AndroidManifest.xml");
+    aab.manifestDir = createDir(aabDir, "manifest");
+    /* File manifest = new File(aab.manifestDir, "AndroidManifest.xml");
     try {
       Files.move(new File(originalManifest), manifest);
     } catch (IOException e) {
@@ -149,13 +154,13 @@ public class AabCompiler implements Callable<Boolean> {
       return false;
     } */
 
-    File dexDir = createDir(aabDir, "dex");
+    aab.dexDir = createDir(aabDir, "dex");
     File[] dexFiles = new File(originalDexDir).listFiles();
     if (dexFiles != null) {
       for (File dex : dexFiles) {
         if (dex.isFile()) {
           try {
-            Files.move(dex, new File(dexDir, dex.getName()));
+            Files.move(dex, new File(aab.dexDir, dex.getName()));
           } catch (IOException e) {
             e.printStackTrace();
             return false;
@@ -165,10 +170,10 @@ public class AabCompiler implements Callable<Boolean> {
     }
 
     // Resources are linked in the AAPT2 step
-    createDir(aabDir, "res");
+    aab.resDir = createDir(aabDir, "res");
 
-    File assetsDir = createDir(aabDir, "assets");
-    File[] assetFiles = new File(originalAssetsDir).listFiles();
+    aab.assetsDir = createDir(aabDir, "assets");
+    /* File[] assetFiles = new File(originalAssetsDir).listFiles();
     if (assetFiles != null) {
       for (File asset : assetFiles) {
         if (asset.isFile()) {
@@ -180,14 +185,14 @@ public class AabCompiler implements Callable<Boolean> {
           }
         }
       }
-    }
+    } */
 
-    File libDir = createDir(aabDir, "lib");
+    aab.libDir = createDir(aabDir, "lib");
     File[] libFiles = new File(originalLibsDir).listFiles();
     if (libFiles != null) {
       for (File lib : libFiles) {
         try {
-          Files.move(lib, new File(libDir, lib.getName()));
+          Files.move(lib, new File(aab.libDir, lib.getName()));
         } catch (IOException e) {
           e.printStackTrace();
           return false;
@@ -199,9 +204,9 @@ public class AabCompiler implements Callable<Boolean> {
   }
 
   private boolean generateResources(File aabDir) {
-    File compiledResourcesDir = createDir(new File(aabDir + File.separator + ".."), "res_compiled");
-    int packSize = 75;
-    List<String> resources = Filewalker.walk(originalMergedResDir);
+    /* File compiledResourcesDir = createDir(new File(aabDir + File.separator + ".."), "res_compiled");
+    int packSize = 100;
+    List<String> resources = Filewalker.walk(originalResDir);
     for (int i = 0; i < resources.size(); i = i + 10) {
       List<String> aapt2CommandLine = new ArrayList<>();
       aapt2CommandLine.add(this.aapt2);
@@ -211,30 +216,54 @@ public class AabCompiler implements Callable<Boolean> {
       }
       aapt2CommandLine.add("-o");
       aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
+      aapt2CommandLine.add("-v");
       String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
       if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
         return false;
       }
-    }
+    } */
 
-    /* List<String> aapt2CommandLine = new ArrayList<>();
+    /* for (File f1 : Objects.requireNonNull(new File(originalResDir).listFiles())) {
+      List<String> aapt2CommandLine = new ArrayList<>();
+      aapt2CommandLine.add(this.aapt2);
+      aapt2CommandLine.add("compile");
+      if (f1.isFile()) {
+        // Is this even possible?
+        aapt2CommandLine.add(f1.getAbsolutePath());
+      } else {
+        for (File f2 : Objects.requireNonNull(f1.listFiles())) {
+          aapt2CommandLine.add(f2.getAbsolutePath());
+        }
+      }
+      aapt2CommandLine.add("-o");
+      aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
+      aapt2CommandLine.add("-v");
+      String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
+      if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
+        return false;
+      }
+    } */
+
+    List<String> aapt2CommandLine = new ArrayList<>();
     aapt2CommandLine.add(this.aapt2);
     aapt2CommandLine.add("compile");
-    aapt2CommandLine.addAll(Filewalker.walk(this.originalResDir));
+    aapt2CommandLine.add("--dir");
+    aapt2CommandLine.add(originalResDir);
     aapt2CommandLine.add("-o");
-    aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath());
+    aapt2CommandLine.add(aabDir.getAbsolutePath() + File.separator + "resources.zip");
+    aapt2CommandLine.add("--no-crunch");
+    aapt2CommandLine.add("-v");
     String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
     if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {
       return false;
-    } */
-
-    if (!linkResources(aabDir, originalManifest, compiledResourcesDir)) {
+    }
+    if (!linkResources(aabDir)) {
       return false;
     }
     return true;
   }
 
-  private boolean linkResources(File aabDir, String manifest, File compiledResourcesDir) {
+  private boolean linkResources(File aabDir) {
     List<String> aapt2CommandLine = new ArrayList<String>();
     aapt2CommandLine.add(this.aapt2);
     aapt2CommandLine.add("link");
@@ -244,10 +273,12 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add("-I");
     aapt2CommandLine.add(androidRuntime);
     aapt2CommandLine.add("-R");
-    aapt2CommandLine.add(compiledResourcesDir.getAbsolutePath() + File.separator + "*.flat");
+    aapt2CommandLine.add(aabDir.getAbsolutePath() + File.separator + "resources.zip");
     // aapt2CommandLine.add(originalRJavaDir + File.separator + "R.txt");
+    aapt2CommandLine.add("-A");
+    aapt2CommandLine.add(originalAssetsDir);
     aapt2CommandLine.add("--manifest");
-    aapt2CommandLine.add(manifest);
+    aapt2CommandLine.add(originalManifest);
     aapt2CommandLine.add("--auto-add-overlay");
     String[] aapt2PackageCommandLine = aapt2CommandLine.toArray(new String[aapt2CommandLine.size()]);
     if (!Execution.execute(null, aapt2PackageCommandLine, System.out, System.err)) {

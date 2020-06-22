@@ -725,7 +725,6 @@ public final class Compiler {
     colorAccent = cleanColor(colorAccent, true);
     File colorsXml = new File(valuesDir, "colors" + suffix + ".xml");
     File stylesXml = new File(valuesDir, "styles" + suffix + ".xml");
-    File attrsXml = new File(valuesDir, "attrs" + suffix + ".xml");
     try {
       BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(colorsXml), "UTF-8"));
       out.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
@@ -768,24 +767,6 @@ public final class Compiler {
       out.write("</style>\n");
       out.write("</resources>\n");
       out.close();
-
-      if (suffix.equals("")) {
-        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attrsXml), "UTF-8"));
-        out.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-        out.write("<resources>\n");
-        out.write("<declare-styleable name=\"Theme\">\n");
-        out.write("<attr name=\"colorPrimary\" format=\"color\" />\n");
-        out.write("<attr name=\"colorPrimaryDark\" format=\"color\" />\n");
-        out.write("<attr name=\"colorAccent\" format=\"color\" />\n");
-        out.write("<attr name=\"switchStyle\" format=\"reference\" />\n");
-        out.write("<attr name=\"windowActionBar\" format=\"boolean\" />\n");
-        out.write("<attr name=\"actionBarStyle\" format=\"reference\" />\n");
-        out.write("<attr name=\"dialogTheme\" format=\"reference\" />\n");
-        out.write("<attr name=\"textAllCaps\" />\n");
-        out.write("</declare-styleable>\n");
-        out.write("</resources>\n");
-        out.close();
-      }
     } catch(IOException e) {
       return false;
     }
@@ -1369,9 +1350,7 @@ public final class Compiler {
         aabCompiler.setStartTime(start);
         aabCompiler.setManifest(manifestFile.getAbsolutePath());
         aabCompiler.setDexDir(dexedClassesDir);
-        aabCompiler.setResDir(resDir.getAbsolutePath());
-        aabCompiler.setMergedResDir(compiler.mergedResDir.getAbsolutePath());
-        aabCompiler.setOriginalRJavaDir(rJavaDir.getAbsolutePath());
+        aabCompiler.setResDir(compiler.mergedResDir.getAbsolutePath());
         aabCompiler.setAssetsDir(createDir(project.getBuildDirectory(), ASSET_DIR_NAME).getAbsolutePath());
         aabCompiler.setLibsDir(createDir(buildDir, LIBS_DIR_NAME).getAbsolutePath());
 

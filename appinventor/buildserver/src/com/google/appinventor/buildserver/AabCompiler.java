@@ -45,7 +45,6 @@ public class AabCompiler implements Callable<Boolean> {
   private String jarsigner = null;
 
   private String androidRuntime = null;
-  private String originalRtxt = null;
   private String deploy = null;
   private String keystore = null;
 
@@ -202,10 +201,6 @@ public class AabCompiler implements Callable<Boolean> {
     this.jarsigner = jarsigner;
   }
 
-  public void setOriginalRtxt(String rtxt) {
-    this.originalRtxt = rtxt;
-  }
-
   private static File createDir(File parentDir, String name) {
     File dir = new File(parentDir, name);
     if (!dir.exists()) {
@@ -252,7 +247,7 @@ public class AabCompiler implements Callable<Boolean> {
 
     // TODO: This is just added so compile process can be stopped and temporal files are been kept for debugging
     try {
-      Thread.sleep(10000);
+      Thread.sleep(10 * 1000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

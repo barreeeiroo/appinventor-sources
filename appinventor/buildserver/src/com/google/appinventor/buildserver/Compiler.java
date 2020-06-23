@@ -1380,7 +1380,6 @@ public final class Compiler {
         aabCompiler.setJarsigner(jarsignerTool);
         aabCompiler.setBundletool(getResource(BUNDLETOOL_JAR));
 
-        aabCompiler.setOriginalRtxt(compiler.appRTxt.getAbsolutePath());
         aabCompiler.setAndroidRuntime(getResource(ANDROID_RUNTIME));
         String fileName = outputFileName;
         if (fileName == null) {

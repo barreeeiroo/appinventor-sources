@@ -38,7 +38,7 @@ public class AabZipper {
     }
 
     if (fileToZip.isDirectory()) {
-      if (zipFileName.endsWith(File.separator)) {
+      if (zipFileName.endsWith("/")) {
         zipOut.putNextEntry(new ZipEntry(zipFileName));
       } else {
         zipOut.putNextEntry(new ZipEntry(zipFileName + "/"));

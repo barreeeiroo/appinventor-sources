@@ -1300,6 +1300,8 @@ public final class Compiler {
         project.getProjectName() + ".ap_";
     File srcJavaDir = createDir(buildDir, "generated/src");
     File rJavaDir = createDir(buildDir, "generated/symbols");
+    // TODO: For AAB, AAPT is no longer "necessary", as AAPT2 is being used. R.txt should be generated with it,
+    // so this step can be skipped.
     if (!compiler.runAaptPackage(manifestFile, resDir, tmpPackageName, srcJavaDir, rJavaDir)) {
       return false;
     }

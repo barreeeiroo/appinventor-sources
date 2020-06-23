@@ -32,8 +32,13 @@ public class AabZipper {
       zipFileName = zipFileName.substring(root.length());
     }
 
+    boolean windows = !File.separator.equals("/");
+    if (windows) {
+      zipFileName = zipFileName.replace(File.separator, "/");
+    }
+
     if (fileToZip.isDirectory()) {
-      if (fileName.endsWith("/")) {
+      if (zipFileName.endsWith(File.separator)) {
         zipOut.putNextEntry(new ZipEntry(zipFileName));
       } else {
         zipOut.putNextEntry(new ZipEntry(zipFileName + "/"));
@@ -42,13 +47,14 @@ public class AabZipper {
       File[] children = fileToZip.listFiles();
       assert children != null;
       for (File childFile : children) {
-        zipFile(childFile, fileName + "/" + childFile.getName(), zipOut, root);
+        zipFile(childFile, fileName + File.separator + childFile.getName(), zipOut, root);
       }
       return;
     }
 
     FileInputStream fis = new FileInputStream(fileToZip);
     ZipEntry zipEntry = new ZipEntry(zipFileName);
+    System.out.println(zipFileName);
     zipOut.putNextEntry(zipEntry);
     byte[] bytes = new byte[1024];
     int length;

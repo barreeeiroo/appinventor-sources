@@ -378,8 +378,8 @@ public class AabCompiler implements Callable<Boolean> {
     bundletoolCommandLine.add("-mx" + mx + "M");
     bundletoolCommandLine.add(bundletool);
     bundletoolCommandLine.add("build-bundle");
-    bundletoolCommandLine.add("--modules=\"" + aab.getBASE() + "\"");
-    bundletoolCommandLine.add("--output=\"" + deploy + "\"");
+    bundletoolCommandLine.add("--modules=" + aab.getBASE() + "");
+    bundletoolCommandLine.add("--output=" + deploy + "");
     String[] bundletoolBuildCommandLine = bundletoolCommandLine.toArray(new String[0]);
 
     return Execution.execute(null, bundletoolBuildCommandLine, System.out, System.err);

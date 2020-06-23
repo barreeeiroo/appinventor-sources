@@ -1360,12 +1360,16 @@ public final class Compiler {
 
         String osName = System.getProperty("os.name");
         String aapt2Tool;
+        String jarsignerTool;
         if (osName.equals("Mac OS X")) {
           aapt2Tool = MAC_AAPT2_TOOL;
+          jarsignerTool = System.getenv("JAVA_HOME") + "/bin/jarsigner";
         } else if (osName.equals("Linux")) {
           aapt2Tool = LINUX_AAPT2_TOOL;
+          jarsignerTool = System.getenv("JAVA_HOME") + "/bin/jarsigner";
         } else if (osName.startsWith("Windows")) {
           aapt2Tool = WINDOWS_AAPT2_TOOL;
+          jarsignerTool = System.getenv("JAVA_HOME") + "\\bin\\jarsigner.exe";
         } else {
           LOG.warning("YAIL compiler - cannot run AAPT2 on OS " + osName);
           err.println("YAIL compiler - cannot run AAPT2 on OS " + osName);
@@ -1373,14 +1377,17 @@ public final class Compiler {
           return false;
         }
         aabCompiler.setAapt2(getResource(aapt2Tool));
+        aabCompiler.setJarsigner(jarsignerTool);
         aabCompiler.setBundletool(getResource(BUNDLETOOL_JAR));
 
+        aabCompiler.setOriginalRtxt(compiler.appRTxt.getAbsolutePath());
         aabCompiler.setAndroidRuntime(getResource(ANDROID_RUNTIME));
         String fileName = outputFileName;
         if (fileName == null) {
           fileName = project.getProjectName() + ".aab";
         }
         aabCompiler.setDeploy(deployDir.getAbsolutePath() + SLASH + fileName);
+        aabCompiler.setKeystore(keystoreFilePath);
 
         Future<Boolean> aab = Executors.newSingleThreadExecutor().submit(aabCompiler);
         out.println("_______BUILDING AAB");

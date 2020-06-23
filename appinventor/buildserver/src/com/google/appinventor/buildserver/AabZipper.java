@@ -54,7 +54,6 @@ public class AabZipper {
 
     FileInputStream fis = new FileInputStream(fileToZip);
     ZipEntry zipEntry = new ZipEntry(zipFileName);
-    System.out.println(zipFileName);
     zipOut.putNextEntry(zipEntry);
     byte[] bytes = new byte[1024];
     int length;

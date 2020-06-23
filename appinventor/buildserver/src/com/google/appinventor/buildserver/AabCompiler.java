@@ -42,9 +42,12 @@ public class AabCompiler implements Callable<Boolean> {
 
   private String aapt2 = null;
   private String bundletool = null;
+  private String jarsigner = null;
 
   private String androidRuntime = null;
-  public String deploy = null;
+  private String originalRtxt = null;
+  private String deploy = null;
+  private String keystore = null;
 
   private class AabPaths {
     private File ROOT = null;
@@ -191,6 +194,18 @@ public class AabCompiler implements Callable<Boolean> {
     this.deploy = deploy;
   }
 
+  public void setKeystore(String keystore) {
+    this.keystore = keystore;
+  }
+
+  public void setJarsigner(String jarsigner) {
+    this.jarsigner = jarsigner;
+  }
+
+  public void setOriginalRtxt(String rtxt) {
+    this.originalRtxt = rtxt;
+  }
+
   private static File createDir(File parentDir, String name) {
     File dir = new File(parentDir, name);
     if (!dir.exists()) {
@@ -217,16 +232,21 @@ public class AabCompiler implements Callable<Boolean> {
 
     out("___________Linking AAB resources");
     if (!linkResources()) {
-      return false;
+      // return false;
     }
 
     out("___________Extracting protobuf resources");
     if (!extractProtobuf()) {
-      return false;
+      // return false;
     }
 
     out("________Running bundletool");
     if (!bundletool()) {
+      // return false;
+    }
+
+    out("________Signing bundle");
+    if (!jarsigner()) {
       // return false;
     }
 
@@ -319,11 +339,15 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add(originalAssetsDir);
     aapt2CommandLine.add("--manifest");
     aapt2CommandLine.add(originalManifest);
+    aapt2CommandLine.add("--emit-ids");
+    aapt2CommandLine.add(buildDir.getAbsolutePath() + "/ids.txt");
     aapt2CommandLine.add("--auto-add-overlay");
     aapt2CommandLine.add("--no-version-vectors");
     aapt2CommandLine.add("--no-auto-version");
     aapt2CommandLine.add("--no-version-transitions");
     aapt2CommandLine.add("--no-resource-deduping");
+    aapt2CommandLine.add("--non-final-ids");
+    aapt2CommandLine.add("-v");
     String[] aapt2LinkCommandLine = aapt2CommandLine.toArray(new String[0]);
 
     return Execution.execute(null, aapt2LinkCommandLine, System.out, System.err);
@@ -378,10 +402,28 @@ public class AabCompiler implements Callable<Boolean> {
     bundletoolCommandLine.add("-mx" + mx + "M");
     bundletoolCommandLine.add(bundletool);
     bundletoolCommandLine.add("build-bundle");
-    bundletoolCommandLine.add("--modules=" + aab.getBASE() + "");
-    bundletoolCommandLine.add("--output=" + deploy + "");
+    bundletoolCommandLine.add("--modules=" + aab.getBASE());
+    bundletoolCommandLine.add("--output=" + deploy);
     String[] bundletoolBuildCommandLine = bundletoolCommandLine.toArray(new String[0]);
 
     return Execution.execute(null, bundletoolBuildCommandLine, System.out, System.err);
+  }
+
+  private boolean jarsigner() {
+    List<String> jarsignerCommandLine = new ArrayList<String>();
+    jarsignerCommandLine.add(jarsigner);
+    jarsignerCommandLine.add("-sigalg");
+    jarsignerCommandLine.add("SHA256withRSA");
+    jarsignerCommandLine.add("-digestalg");
+    jarsignerCommandLine.add("SHA-256");
+    jarsignerCommandLine.add("-keystore");
+    jarsignerCommandLine.add(keystore);
+    jarsignerCommandLine.add("-storepass");
+    jarsignerCommandLine.add("android");
+    jarsignerCommandLine.add(deploy);
+    jarsignerCommandLine.add("AndroidKey");
+    String[] jarsignerSignCommandLine = jarsignerCommandLine.toArray(new String[0]);
+
+    return Execution.execute(null, jarsignerSignCommandLine, System.out, System.err);
   }
 }

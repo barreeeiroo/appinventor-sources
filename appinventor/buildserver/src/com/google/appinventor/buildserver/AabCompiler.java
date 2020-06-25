@@ -209,8 +209,7 @@ public class AabCompiler implements Callable<Boolean> {
     return dir;
   }
 
-  @Override
-  public Boolean call() {
+  public boolean aapt2() {
     // Progress is at 85% now
 
     // First step: create the directory that will be zipped later, and start creating the AAB module layout
@@ -227,7 +226,20 @@ public class AabCompiler implements Callable<Boolean> {
 
     out("___________Linking AAB resources");
     if (!linkResources()) {
-      // return false;
+      return false;
+    }
+    return true;
+  }
+
+  public File appRtxt() {
+    return new File(buildDir.getAbsolutePath(), "R.txt");
+  }
+
+  @Override
+  public Boolean call() {
+    out("________Ensuring");
+    if (!createStructure()) {
+      return false;
     }
 
     out("___________Extracting protobuf resources");
@@ -334,14 +346,13 @@ public class AabCompiler implements Callable<Boolean> {
     aapt2CommandLine.add(originalAssetsDir);
     aapt2CommandLine.add("--manifest");
     aapt2CommandLine.add(originalManifest);
-    aapt2CommandLine.add("--emit-ids");
-    aapt2CommandLine.add(buildDir.getAbsolutePath() + "/ids.txt");
+    aapt2CommandLine.add("--output-text-symbols");
+    aapt2CommandLine.add(buildDir.getAbsolutePath() + "/R.txt");
     aapt2CommandLine.add("--auto-add-overlay");
     aapt2CommandLine.add("--no-version-vectors");
     aapt2CommandLine.add("--no-auto-version");
     aapt2CommandLine.add("--no-version-transitions");
     aapt2CommandLine.add("--no-resource-deduping");
-    aapt2CommandLine.add("--non-final-ids");
     aapt2CommandLine.add("-v");
     String[] aapt2LinkCommandLine = aapt2CommandLine.toArray(new String[0]);
 

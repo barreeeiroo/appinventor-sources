@@ -182,17 +182,17 @@ public class AabCompiler implements Callable<Boolean> {
 
     out.println("___________Extracting protobuf resources");
     if (!extractProtobuf()) {
-      // return false;
+      return false;
     }
 
     out.println("________Running bundletool");
     if (!bundletool()) {
-      // return false;
+      return false;
     }
 
     out.println("________Signing bundle");
     if (!jarsigner()) {
-      // return false;
+      return false;
     }
     return true;
   }

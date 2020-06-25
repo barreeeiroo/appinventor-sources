@@ -224,6 +224,11 @@ public final class Compiler {
    */
   private File mergedResDir;
 
+  /**
+   * Zip file containing all compiled resources with AAPT2
+   */
+  private File resourcesZip;
+
   // TODO(Will): Remove the following Set once the deprecated
   //             @SimpleBroadcastReceiver annotation is removed. It should
   //             should remain for the time being because otherwise we'll break
@@ -1297,69 +1302,30 @@ public final class Compiler {
     out.println("________Invoking AAPT");
     File deployDir = createDir(buildDir, "deploy");
     String tmpPackageName = deployDir.getAbsolutePath() + SLASH +
-        project.getProjectName() + ".ap_";
+        project.getProjectName() + "." + (isAab ? "apk" : "ap_");
     File srcJavaDir = createDir(buildDir, "generated/src");
     File rJavaDir = createDir(buildDir, "generated/symbols");
-    // TODO: For AAB, AAPT is no longer "necessary", as AAPT2 is being used. R.txt should be generated with it,
-    // so this step can be skipped.
-    if (!compiler.runAaptPackage(manifestFile, resDir, tmpPackageName, srcJavaDir, rJavaDir)) {
-      return false;
+    if (isAab) {
+      if (!compiler.runAapt2Compile(resDir)) {
+        return false;
+      }
+      if (!compiler.runAapt2Link(manifestFile, tmpPackageName, rJavaDir)) {
+        return false;
+      }
+    } else {
+      if (!compiler.runAaptPackage(manifestFile, resDir, tmpPackageName, srcJavaDir, rJavaDir)) {
+        return false;
+      }
     }
     if (reporter != null) {
       reporter.report(30);
     }
 
-    File tmpDir = createDir(buildDir, "tmp");
-    String dexedClassesDir = tmpDir.getAbsolutePath();
-
-    AabCompiler aabCompiler = null;
-    if (isAab) {
-      aabCompiler = new AabCompiler(out, reporter, buildDir, childProcessRam - 200);
-      aabCompiler.setStartTime(start);
-      aabCompiler.setManifest(manifestFile.getAbsolutePath());
-      aabCompiler.setResDir(compiler.mergedResDir.getAbsolutePath());
-      aabCompiler.setAssetsDir(createDir(project.getBuildDirectory(), ASSET_DIR_NAME).getAbsolutePath());
-      aabCompiler.setLibsDir(createDir(buildDir, LIBS_DIR_NAME).getAbsolutePath());
-
-      String osName = System.getProperty("os.name");
-      String aapt2Tool;
-      String jarsignerTool;
-      if (osName.equals("Mac OS X")) {
-        aapt2Tool = MAC_AAPT2_TOOL;
-        jarsignerTool = System.getenv("JAVA_HOME") + "/bin/jarsigner";
-      } else if (osName.equals("Linux")) {
-        aapt2Tool = LINUX_AAPT2_TOOL;
-        jarsignerTool = System.getenv("JAVA_HOME") + "/bin/jarsigner";
-      } else if (osName.startsWith("Windows")) {
-        aapt2Tool = WINDOWS_AAPT2_TOOL;
-        jarsignerTool = System.getenv("JAVA_HOME") + "\\bin\\jarsigner.exe";
-      } else {
-        LOG.warning("YAIL compiler - cannot run AAPT2 on OS " + osName);
-        err.println("YAIL compiler - cannot run AAPT2 on OS " + osName);
-        userErrors.print(String.format(ERROR_IN_STAGE, "AAPT2"));
-        return false;
-      }
-      aabCompiler.setAapt2(getResource(aapt2Tool));
-      aabCompiler.setJarsigner(jarsignerTool);
-      aabCompiler.setBundletool(getResource(BUNDLETOOL_JAR));
-
-      aabCompiler.setAndroidRuntime(getResource(ANDROID_RUNTIME));
-      String fileName = outputFileName;
-      if (fileName == null) {
-        fileName = project.getProjectName() + ".aab";
-      }
-      aabCompiler.setDeploy(deployDir.getAbsolutePath() + SLASH + fileName);
-      aabCompiler.setKeystore(keystoreFilePath);
-      aabCompiler.setDexDir(dexedClassesDir);
-
-      if (aabCompiler.aapt2()) {
-        compiler.appRTxt = aabCompiler.appRtxt();
-      };
-    }
-
     // Create class files.
     out.println("________Compiling source files");
     File classesDir = createDir(buildDir, "classes");
+    File tmpDir = createDir(buildDir, "tmp");
+    String dexedClassesDir = tmpDir.getAbsolutePath();
     if (!compiler.generateRClasses(classesDir)) {
       return false;
     }
@@ -1395,43 +1361,35 @@ public final class Compiler {
     }
 
     if (isAab) {
-      try {
-        Future<Boolean> aab = Executors.newSingleThreadExecutor().submit(aabCompiler);
-        out.println("_______BUILDING AAB");
-        System.out.println("_______BUILDING AAB");
-        return aab.get();
-      } catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
+      if (!compiler.bundleTool(buildDir, childProcessRam, tmpPackageName, outputFileName, deployDir, keystoreFilePath, dexedClassesDir)) {
+        return false;
       }
-      return false;
-    }
+    } else {
+      // Seal the apk with ApkBuilder
+      out.println("________Invoking ApkBuilder");
+      String fileName = outputFileName;
+      if (fileName == null) {
+        fileName = project.getProjectName() + ".apk";
+      }
+      String apkAbsolutePath = deployDir.getAbsolutePath() + SLASH + fileName;
+      if (!compiler.runApkBuilder(apkAbsolutePath, tmpPackageName, dexedClassesDir)) {
+        return false;
+      }
+      if (reporter != null) {
+        reporter.report(95);
+      }
 
-    // TODO: Code below this line should get refactored
+      // ZipAlign the apk file
+      out.println("________ZipAligning the apk file");
+      if (!compiler.runZipAlign(apkAbsolutePath, tmpDir)) {
+        return false;
+      }
 
-    // Seal the apk with ApkBuilder
-    out.println("________Invoking ApkBuilder");
-    String fileName = outputFileName;
-    if (fileName == null) {
-      fileName = project.getProjectName() + ".apk";
-    }
-    String apkAbsolutePath = deployDir.getAbsolutePath() + SLASH + fileName;
-    if (!compiler.runApkBuilder(apkAbsolutePath, tmpPackageName, dexedClassesDir)) {
-      return false;
-    }
-    if (reporter != null) {
-      reporter.report(95);
-    }
-
-    // ZipAlign the apk file
-    out.println("________ZipAligning the apk file");
-    if (!compiler.runZipAlign(apkAbsolutePath, tmpDir)) {
-      return false;
-    }
-
-    // Sign the apk file
-    out.println("________Signing the apk file");
-    if (!compiler.runApkSigner(apkAbsolutePath, keystoreFilePath)) {
-      return false;
+      // Sign the apk file
+      out.println("________Signing the apk file");
+      if (!compiler.runApkSigner(apkAbsolutePath, keystoreFilePath)) {
+        return false;
+      }
     }
 
     if (reporter != null) {
@@ -2188,6 +2146,153 @@ public final class Compiler {
     LOG.info(aaptTimeMessage);
 
     return true;
+  }
+
+  private boolean runAapt2Compile(File resDir) {
+    resourcesZip = new File(resDir, "resources.zip");
+    String aaptTool;
+    String aapt2Tool;
+    String osName = System.getProperty("os.name");
+    if (osName.equals("Mac OS X")) {
+      aaptTool = MAC_AAPT_TOOL;
+      aapt2Tool = MAC_AAPT2_TOOL;
+    } else if (osName.equals("Linux")) {
+      aaptTool = LINUX_AAPT_TOOL;
+      aapt2Tool = LINUX_AAPT_TOOL;
+    } else if (osName.startsWith("Windows")) {
+      aaptTool = WINDOWS_AAPT_TOOL;
+      aapt2Tool = WINDOWS_AAPT2_TOOL;
+    } else {
+      LOG.warning("YAIL compiler - cannot run AAPT2 on OS " + osName);
+      err.println("YAIL compiler - cannot run AAPT2 on OS " + osName);
+      userErrors.print(String.format(ERROR_IN_STAGE, "AAPT2"));
+      return false;
+    }
+
+    if (!mergeResources(resDir, project.getBuildDirectory(), aaptTool)) {
+      LOG.warning("Unable to merge resources");
+      err.println("Unable to merge resources");
+      userErrors.print(String.format(ERROR_IN_STAGE, "AAPT"));
+      return false;
+    }
+
+    List<String> aapt2CommandLine = new ArrayList<>();
+    aapt2CommandLine.add(getResource(aapt2Tool));
+    aapt2CommandLine.add("compile");
+    aapt2CommandLine.add("--dir");
+    aapt2CommandLine.add(mergedResDir.getAbsolutePath());
+    aapt2CommandLine.add("-o");
+    aapt2CommandLine.add(resourcesZip.getAbsolutePath());
+    aapt2CommandLine.add("--no-crunch");
+    aapt2CommandLine.add("-v");
+    String[] aapt2CompileCommandLine = aapt2CommandLine.toArray(new String[0]);
+
+    long startAapt2 = System.currentTimeMillis();
+    if (!Execution.execute(null, aapt2CompileCommandLine, System.out, System.err)) {
+      LOG.warning("YAIL compiler - AAPT2 compile execution failed.");
+      err.println("YAIL compiler - AAPT2 compile execution failed.");
+      userErrors.print(String.format(ERROR_IN_STAGE, "AAPT2 compile"));
+      return false;
+    }
+
+    String aaptTimeMessage = "AAPT2 compile time: " + ((System.currentTimeMillis() - startAapt2) / 1000.0) + " seconds";
+    out.println(aaptTimeMessage);
+    LOG.info(aaptTimeMessage);
+    return true;
+  }
+
+  private boolean runAapt2Link(File manifestFile, String tmpPackageName, File symbolOutputDir) {
+    String aapt2Tool;
+    String osName = System.getProperty("os.name");
+    if (osName.equals("Mac OS X")) {
+      aapt2Tool = MAC_AAPT2_TOOL;
+    } else if (osName.equals("Linux")) {
+      aapt2Tool = LINUX_AAPT2_TOOL;
+    } else if (osName.startsWith("Windows")) {
+      aapt2Tool = WINDOWS_AAPT2_TOOL;
+    } else {
+      LOG.warning("YAIL compiler - cannot run AAPT2 on OS " + osName);
+      err.println("YAIL compiler - cannot run AAPT2 on OS " + osName);
+      userErrors.print(String.format(ERROR_IN_STAGE, "AAPT2"));
+      return false;
+    }
+    appRTxt = new File(symbolOutputDir, "R.txt");
+
+    List<String> aapt2CommandLine = new ArrayList<>();
+    aapt2CommandLine.add(getResource(aapt2Tool));
+    aapt2CommandLine.add("link");
+    aapt2CommandLine.add("--proto-format");
+    aapt2CommandLine.add("-o");
+    aapt2CommandLine.add(tmpPackageName);
+    aapt2CommandLine.add("-I");
+    aapt2CommandLine.add(getResource(ANDROID_RUNTIME));
+    aapt2CommandLine.add("-R");
+    aapt2CommandLine.add(resourcesZip.getAbsolutePath());
+    aapt2CommandLine.add("-A");
+    aapt2CommandLine.add(createDir(project.getBuildDirectory(), ASSET_DIR_NAME).getAbsolutePath());
+    aapt2CommandLine.add("--manifest");
+    aapt2CommandLine.add(manifestFile.getAbsolutePath());
+    aapt2CommandLine.add("--output-text-symbols");
+    aapt2CommandLine.add(appRTxt.getAbsolutePath());
+    aapt2CommandLine.add("--auto-add-overlay");
+    aapt2CommandLine.add("--no-version-vectors");
+    aapt2CommandLine.add("--no-auto-version");
+    aapt2CommandLine.add("--no-version-transitions");
+    aapt2CommandLine.add("--no-resource-deduping");
+    aapt2CommandLine.add("-v");
+    String[] aapt2LinkCommandLine = aapt2CommandLine.toArray(new String[0]);
+
+    long startAapt2 = System.currentTimeMillis();
+    if (!Execution.execute(null, aapt2LinkCommandLine, System.out, System.err)) {
+      LOG.warning("YAIL compiler - AAPT2 link execution failed.");
+      err.println("YAIL compiler - AAPT2 link execution failed.");
+      userErrors.print(String.format(ERROR_IN_STAGE, "AAPT2 link"));
+      return false;
+    }
+
+    String aaptTimeMessage = "AAPT2 link time: " + ((System.currentTimeMillis() - startAapt2) / 1000.0) + " seconds";
+    out.println(aaptTimeMessage);
+    LOG.info(aaptTimeMessage);
+    return true;
+  }
+
+  private boolean bundleTool(File buildDir, int childProcessRam, String tmpPackageName,
+                             String outputFileName, File deployDir, String keystoreFilePath, String dexedClassesDir) {
+    try {
+      String osName = System.getProperty("os.name");
+      String jarsignerTool;
+      if (osName.equals("Mac OS X")) {
+        jarsignerTool = System.getenv("JAVA_HOME") + "/bin/jarsigner";
+      } else if (osName.equals("Linux")) {
+        jarsignerTool = System.getenv("JAVA_HOME") + "/bin/jarsigner";
+      } else if (osName.startsWith("Windows")) {
+        jarsignerTool = System.getenv("JAVA_HOME") + "\\bin\\jarsigner.exe";
+      } else {
+        LOG.warning("YAIL compiler - cannot run Jarsigner on OS " + osName);
+        err.println("YAIL compiler - cannot run AAPT2 on OS " + osName);
+        userErrors.print(String.format(ERROR_IN_STAGE, "AabCompiler"));
+        return false;
+      }
+      String fileName = outputFileName;
+      if (fileName == null) {
+        fileName = project.getProjectName() + ".aab";
+      }
+
+      AabCompiler aabCompiler = new AabCompiler(out, buildDir, childProcessRam - 200)
+            .setLibsDir(libsDir)
+            .setProtoApk(new File(tmpPackageName))
+            .setJarsigner(jarsignerTool)
+            .setBundletool(getResource(BUNDLETOOL_JAR))
+            .setDeploy(deployDir.getAbsolutePath() + SLASH + fileName)
+            .setKeystore(keystoreFilePath)
+            .setDexDir(dexedClassesDir);
+
+      Future<Boolean> aab = Executors.newSingleThreadExecutor().submit(aabCompiler);
+      return aab.get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+    return false;
   }
 
   private boolean insertNativeLibs(File buildDir){

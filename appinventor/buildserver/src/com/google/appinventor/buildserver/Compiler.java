@@ -2158,7 +2158,7 @@ public final class Compiler {
       aapt2Tool = MAC_AAPT2_TOOL;
     } else if (osName.equals("Linux")) {
       aaptTool = LINUX_AAPT_TOOL;
-      aapt2Tool = LINUX_AAPT_TOOL;
+      aapt2Tool = LINUX_AAPT2_TOOL;
     } else if (osName.startsWith("Windows")) {
       aaptTool = WINDOWS_AAPT_TOOL;
       aapt2Tool = WINDOWS_AAPT2_TOOL;

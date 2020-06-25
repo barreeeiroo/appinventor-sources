@@ -1,4 +1,4 @@
-name: Java CI
+name: MIT App Inventor
 
 on: [push]
 
@@ -13,18 +13,14 @@ jobs:
         with:
           java-version: 1.8
           
-          
-      - name: MIT App Inventor
-        run: cd appinventor
-          
       - name: Clean
-        run: ant clean
+        run: ant -buildfile appinventor/build.xml clean
 
       - name: PlayApp
-        run: ant PlayApp
+        run: ant -buildfile appinventor/build.xml PlayApp
           
       - name: Clean
-        run: ant clean
+        run: ant -buildfile appinventor/build.xml clean
 
       - name: PlayAppAab
-        run: ant PlayAppAab
+        run: ant -buildfile appinventor/build.xml PlayAppAab

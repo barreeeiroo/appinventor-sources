@@ -23,50 +23,53 @@ import java.util.zip.ZipFile;
  */
 public final class Main {
 
+  public final static String APK_EXTENSION_VALUE = "apk";
+  public final static String AAB_EXTENSION_VALUE = "aab";
+
   static class CommandLineOptions {
     @Option(name = "--isForCompanion", usage = "create the MIT AI2 Companion APK")
     boolean isForCompanion = false;
 
     @Option(name = "--inputZipFile", required = true,
-            usage = "the ZIP file of the project to build")
+        usage = "the ZIP file of the project to build")
     File inputZipFile;
 
     @Option(name = "--userName", required = true,
-            usage = "the name of the user building the project")
+        usage = "the name of the user building the project")
     String userName;
 
     @Option(name = "--outputDir", required = true,
-            usage = "the directory in which to put the output of the build")
+        usage = "the directory in which to put the output of the build")
     File outputDir;
 
     @Option(name = "--childProcessRamMb",
-            usage = "Maximum ram that can be used by a child processes, in MB.")
+        usage = "Maximum ram that can be used by a child processes, in MB.")
     int childProcessRamMb = 2048;
 
     @Option(name = "--dexCacheDir",
-            usage = "the directory to cache the pre-dexed libraries")
+        usage = "the directory to cache the pre-dexed libraries")
     String dexCacheDir = null;
 
     @Option(name = "--includeDangerousPermissions",
-            usage = "Add extra features not allowed in the Google Play store.")
+        usage = "Add extra features not allowed in the Google Play store.")
     boolean includeDangerousPermissions = false;
 
     @Option(name = "--extensions",
-            usage = "Include the named extensions in the compilation.",
-            handler = StringArrayOptionHandler.class)
+        usage = "Include the named extensions in the compilation.",
+        handler = StringArrayOptionHandler.class)
     String[] extensions = null;
 
     @Option(name = "--outputFileName",
-            usage = "Use the specified file name for output rather than the App Name.")
+        usage = "Use the specified file name for output rather than the App Name.")
     String outputFileName = null;
 
     @Option(name = "--isForEmulator",
-            usage = "Exclude native libraries for emulator.")
+        usage = "Exclude native libraries for emulator.")
     boolean isForEmulator = false;
 
-    @Option(name = "--aab",
-            usage = "Builds an Android App Bundle instead of an APK file.")
-    boolean aab = false;
+    @Option(name = "--ext",
+        usage = "Specifies the build type to use.")
+    String ext = "apk";
   }
 
   private static CommandLineOptions commandLineOptions = new CommandLineOptions();
@@ -102,17 +105,17 @@ public final class Main {
       System.exit(1);
     }
     Result result = projectBuilder.build(commandLineOptions.userName,
-            zip,
-            commandLineOptions.outputDir,
-            commandLineOptions.outputFileName,
-            commandLineOptions.isForCompanion,
-            commandLineOptions.isForEmulator,
-            commandLineOptions.includeDangerousPermissions,
-            commandLineOptions.extensions,
-            commandLineOptions.childProcessRamMb,
-            commandLineOptions.dexCacheDir,
-            null,
-            commandLineOptions.aab);
+                                         zip,
+                                         commandLineOptions.outputDir,
+                                         commandLineOptions.outputFileName,
+                                         commandLineOptions.isForCompanion,
+                                         commandLineOptions.isForEmulator,
+                                         commandLineOptions.includeDangerousPermissions,
+                                         commandLineOptions.extensions,
+                                         commandLineOptions.childProcessRamMb,
+                                         commandLineOptions.dexCacheDir,
+                                         null,
+                                         AAB_EXTENSION_VALUE.equals(commandLineOptions.ext));
     System.exit(result.getResult());
   }
 

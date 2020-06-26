@@ -23,7 +23,7 @@ public interface ProjectServiceAsync {
    * @see ProjectService#newProject(String, String, NewProjectParameters)
    */
   void newProject(String projectType, String projectName, NewProjectParameters params,
-                  AsyncCallback<UserProject> callback);
+      AsyncCallback<UserProject> callback);
 
   /**
    * @see ProjectService#newProjectFromTemplate(String, String, NewProjectParameters, String)
@@ -155,7 +155,7 @@ public interface ProjectServiceAsync {
    */
 
   void screenshot(String sessionId, long projectId, String fileId, String content,
-                  AsyncCallback<RpcResult> callback);
+    AsyncCallback<RpcResult> callback);
 
   /**
    * @see ProjectService#build(long, String, String, boolean)

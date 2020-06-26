@@ -21,6 +21,7 @@ import com.google.appinventor.server.project.CommonProjectService;
 import com.google.appinventor.server.project.utils.Security;
 import com.google.appinventor.server.properties.json.ServerJsonParser;
 import com.google.appinventor.server.storage.StorageIo;
+import com.google.appinventor.server.util.UriBuilder;
 import com.google.appinventor.shared.properties.json.JSONParser;
 import com.google.appinventor.shared.rpc.RpcResult;
 import com.google.appinventor.shared.rpc.ServerLayout;
@@ -806,9 +807,9 @@ public final class YoungAndroidProjectService extends CommonProjectService {
   }
 
   String buildErrorMsg(String exceptionName, URL buildURL, String userId, long projectId) {
-    return "Request to build failed with " + exceptionName 
-      + ", user=" + userId + ", project=" + projectId 
-      + ", build URL is " + (buildURL != null ? buildURL : "null") + " [" 
+    return "Request to build failed with " + exceptionName
+      + ", user=" + userId + ", project=" + projectId
+      + ", build URL is " + (buildURL != null ? buildURL : "null") + " ["
       + (buildURL != null ? buildURL.toString().length() : "n/a") + "]";
   }
 
@@ -817,21 +818,20 @@ public final class YoungAndroidProjectService extends CommonProjectService {
   // command line argument.
   private String getBuildServerUrlStr(String userName, String userId,
     long projectId, boolean secondBuildserver, String fileName, boolean isAab)
-      throws UnsupportedEncodingException, EncryptionException {
-    return "http://" + (secondBuildserver ? buildServerHost2.get() : buildServerHost.get()) +
-      "/buildserver/build-all-from-zip-async"
-      + "?uname=" + URLEncoder.encode(userName, "UTF-8")
-      + (sendGitVersion.get()
-        ? "&gitBuildVersion="
-        + URLEncoder.encode(GitBuildId.getVersion(), "UTF-8")
-        : "")
-      + "&callback="
-      + URLEncoder.encode("http://" + getCurrentHost() + ServerLayout.ODE_BASEURL_NOAUTH
-        + ServerLayout.RECEIVE_BUILD_SERVLET + "/"
-        + Security.encryptUserAndProjectId(userId, projectId)
-        + "/" + fileName,
-        "UTF-8")
-      + (isAab ? "&aab=1" : "&aab=0");
+      throws EncryptionException {
+    UriBuilder uriBuilder = new UriBuilder(
+        "http://" +
+        (secondBuildserver ? buildServerHost2.get() : buildServerHost.get()) +
+        "/buildserver/build-all-from-zip-async"
+    )
+        .add("uname", userName)
+        .add("gitBuildVersion", GitBuildId.getVersion())
+        .add("callback", "http://" + getCurrentHost() + ServerLayout.ODE_BASEURL_NOAUTH +
+            ServerLayout.RECEIVE_BUILD_SERVLET + "/" +
+            Security.encryptUserAndProjectId(userId, projectId) + "/" +
+            fileName)
+        .add("ext", isAab ? "aab" : "apk");
+    return uriBuilder.build();
   }
 
   private String getCurrentHost() {

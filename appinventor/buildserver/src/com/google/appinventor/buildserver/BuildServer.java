@@ -156,8 +156,6 @@ public class BuildServer {
 
   private static final CommandLineOptions commandLineOptions = new CommandLineOptions();
 
-  private final String AAB_TRUE_VALUE = "1";
-
   // Logging support
   private static final Logger LOG = Logger.getLogger(BuildServer.class.getName());
 
@@ -403,7 +401,7 @@ public class BuildServer {
   @POST
   @Path("build-from-zip")
   @Produces("application/vnd.android.package-archive;charset=utf-8")
-  public Response buildFromZipFile(@QueryParam("uname") String userName, @QueryParam("aab") String aab, File zipFile)
+  public Response buildFromZipFile(@QueryParam("uname") String userName, @QueryParam("ext") String ext, File zipFile)
     throws IOException {
     // Set the inputZip field so we can delete the input zip file later in cleanUp.
     inputZip = zipFile;
@@ -413,7 +411,7 @@ public class BuildServer {
       return Response.status(Response.Status.FORBIDDEN).type(MediaType.TEXT_PLAIN_TYPE)
         .entity("Entry point unavailable unless debugging.").build();
 
-    boolean isAab = aab != null && aab.equals(AAB_TRUE_VALUE);
+    boolean isAab = Main.AAB_EXTENSION_VALUE.equals(ext);
 
     try {
       build(userName, zipFile, isAab, null);
@@ -448,7 +446,7 @@ public class BuildServer {
   @POST
   @Path("build-all-from-zip")
   @Produces("application/zip;charset=utf-8")
-  public Response buildAllFromZipFile(@QueryParam("uname") String userName, @QueryParam("aab") String aab, File inputZipFile)
+  public Response buildAllFromZipFile(@QueryParam("uname") String userName, @QueryParam("ext") String ext, File inputZipFile)
     throws IOException, JSONException {
     // Set the inputZip field so we can delete the input zip file later in cleanUp.
     inputZip = inputZipFile;
@@ -458,7 +456,7 @@ public class BuildServer {
       return Response.status(Response.Status.FORBIDDEN).type(MediaType.TEXT_PLAIN_TYPE)
         .entity("Entry point unavailable unless debugging.").build();
 
-    boolean isAab = aab != null && aab.equals(AAB_TRUE_VALUE);
+    boolean isAab = Main.AAB_EXTENSION_VALUE.equals(ext);
 
     try {
       buildAndCreateZip(userName, inputZipFile, isAab, null);
@@ -508,7 +506,7 @@ public class BuildServer {
     @QueryParam("uname") final String userName,
     @QueryParam("callback") final String callbackUrlStr,
     @QueryParam("gitBuildVersion") final String gitBuildVersion,
-    @QueryParam("aab") final String aab,
+    @QueryParam("ext") final String ext,
     final File inputZipFile) throws IOException {
     // Set the inputZip field so we can delete the input zip file later in
     // cleanUp.
@@ -516,7 +514,7 @@ public class BuildServer {
     inputZip.deleteOnExit(); // In case build server is killed before cleanUp executes.
     String requesting_host = (new URL(callbackUrlStr)).getHost();
 
-    final boolean isAab = aab != null && aab.equals(AAB_TRUE_VALUE);
+    final boolean isAab = Main.AAB_EXTENSION_VALUE.equals(ext);
 
     //for the request for update part, the file should be empty
     if (inputZip.length() == 0L) {

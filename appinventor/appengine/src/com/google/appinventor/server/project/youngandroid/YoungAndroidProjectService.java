@@ -825,12 +825,14 @@ public final class YoungAndroidProjectService extends CommonProjectService {
         "/buildserver/build-all-from-zip-async"
     )
         .add("uname", userName)
-        .add("gitBuildVersion", GitBuildId.getVersion())
         .add("callback", "http://" + getCurrentHost() + ServerLayout.ODE_BASEURL_NOAUTH +
             ServerLayout.RECEIVE_BUILD_SERVLET + "/" +
             Security.encryptUserAndProjectId(userId, projectId) + "/" +
             fileName)
         .add("ext", isAab ? "aab" : "apk");
+    if (sendGitVersion.get()) {
+      uriBuilder.add("gitBuildVersion", GitBuildId.getVersion());
+    }
     return uriBuilder.build();
   }
 

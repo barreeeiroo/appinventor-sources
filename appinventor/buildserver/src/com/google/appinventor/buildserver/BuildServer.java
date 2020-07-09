@@ -69,7 +69,7 @@ import javax.ws.rs.core.Response;
 public class BuildServer {
   private ProjectBuilder projectBuilder = new ProjectBuilder();
 
-  static class ProgressReporter {
+  public static class ProgressReporter {
     // We create a ProgressReporter instance which is handed off to the
     // project builder and compiler. It is called to report the progress
     // of the build. The reporting is done by calling the callback URL

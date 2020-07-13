@@ -6,6 +6,10 @@
 
 package com.google.appinventor.buildserver;
 
+import com.google.appinventor.buildserver.compiler.Executor;
+import com.google.appinventor.buildserver.compiler.ExecutorContext;
+import com.google.appinventor.buildserver.compiler.Reporter;
+import com.google.appinventor.buildserver.compiler.tasks.Bundletool;
 import com.google.appinventor.common.utils.StringUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -16,33 +20,23 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
-
+import org.apache.commons.io.FileUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import org.apache.commons.io.FileUtils;
 
 /**
  * Provides support for building Young Android projects.
@@ -66,7 +60,7 @@ public final class ProjectBuilder {
   // They should probably be in some place shared with the server
   private static final String PROJECT_DIRECTORY = "youngandroidproject";
   private static final String PROJECT_PROPERTIES_FILE_NAME = PROJECT_DIRECTORY + "/" +
-                                                            "project.properties";
+      "project.properties";
   private static final String KEYSTORE_FILE_NAME = YoungAndroidConstants.PROJECT_KEYSTORE_LOCATION;
 
   private static final String FORM_PROPERTIES_EXTENSION =
@@ -120,8 +114,8 @@ public final class ProjectBuilder {
   }
 
   Result build(String userName, ZipFile inputZip, File outputDir, String outputFileName,
-    boolean isForCompanion, boolean isForEmulator, boolean includeDangerousPermissions, String[] extraExtensions,
-    int childProcessRam, String dexCachePath, BuildServer.ProgressReporter reporter, boolean isAab) {
+               boolean isForCompanion, boolean isForEmulator, boolean includeDangerousPermissions, String[] extraExtensions,
+               int childProcessRam, String dexCachePath, BuildServer.ProgressReporter reporter, String ext) {
     try {
       // Download project files into a temporary directory
       File projectRoot = createNewTempDir();
@@ -148,12 +142,6 @@ public final class ProjectBuilder {
         File buildTmpDir = new File(projectRoot, "build/tmp");
         buildTmpDir.mkdirs();
 
-        // Prepare for redirection of compiler message output
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        PrintStream console = new PrintStream(output);
-        ByteArrayOutputStream errors = new ByteArrayOutputStream();
-        PrintStream userErrors = new PrintStream(errors);
-
         Set<String> componentTypes = getComponentTypes(sourceFiles, project.getAssetsDirectory());
         if (isForCompanion) {
           componentTypes.addAll(getAllComponentTypes());
@@ -164,24 +152,34 @@ public final class ProjectBuilder {
         }
         Map<String, Set<String>> componentBlocks = getComponentBlocks(sourceFiles);
 
+        // Generate the compiler context
+        Reporter r = new Reporter(reporter);
+        ExecutorContext context = new ExecutorContext(project, componentTypes, componentBlocks, r,
+            isForCompanion, isForEmulator, includeDangerousPermissions, keyStorePath,
+            childProcessRam, dexCachePath, outputFileName);
+
         // Invoke YoungAndroid compiler
-        boolean success =
+        Executor compiler = new Executor(context, ext);
+        compiler.add(Bundletool.class);
+        Future<Boolean> executor = Executors.newSingleThreadExecutor().submit(compiler);
+
+        /* boolean success =
             Compiler.compile(project, componentTypes, componentBlocks, console, console, userErrors,
                 isForCompanion, isForEmulator, includeDangerousPermissions, keyStorePath,
-                childProcessRam, dexCachePath, outputFileName, reporter, isAab);
-        console.close();
-        userErrors.close();
+                childProcessRam, dexCachePath, outputFileName, reporter, isAab); */
+        boolean success = executor.get();
+        r.close();
 
         // Retrieve compiler messages and convert to HTML and log
         String srcPath = projectRoot.getAbsolutePath() + "/" + PROJECT_DIRECTORY + "/../src/";
-        String messages = processCompilerOutput(output.toString(PathUtil.DEFAULT_CHARSET),
+        String messages = processCompilerOutput(context.getReporter().getSystemOutput(),
             srcPath);
 
         if (success) {
           // Locate output file
           String fileName = outputFileName;
           if (fileName == null) {
-            fileName = project.getProjectName() + (isAab ? ".aab" : ".apk");
+            fileName = project.getProjectName() + "." + ext;
           }
           File outputFile = new File(projectRoot,
               "build/deploy/" + fileName);
@@ -196,7 +194,7 @@ public final class ProjectBuilder {
             }
           }
         }
-        return new Result(success, messages, errors.toString(PathUtil.DEFAULT_CHARSET));
+        return new Result(success, messages, context.getReporter().getUserOutput());
       } finally {
         // On some platforms (OS/X), the java.io.tmpdir contains a symlink. We need to use the
         // canonical path here so that Files.deleteRecursively will work.
@@ -270,7 +268,7 @@ public final class ProjectBuilder {
    * @return A mapping of component type names to sets of block names used in
    * the project
    * @throws IOException if any of the files named in {@code files} cannot be
-   * read
+   *                     read
    */
   private static Map<String, Set<String>> getComponentBlocks(List<String> files)
       throws IOException {
@@ -333,7 +331,7 @@ public final class ProjectBuilder {
         continue;
       }
 
-      File extCompJsonFile = new File (extCompDir, "component.json");
+      File extCompJsonFile = new File(extCompDir, "component.json");
       if (extCompJsonFile.exists()) {
         JSONObject extCompJson = new JSONObject(Resources.toString(
             extCompJsonFile.toURI().toURL(), Charsets.UTF_8));
@@ -361,11 +359,11 @@ public final class ProjectBuilder {
     File keyStoreFile = new File(projectRoot.getPath(), keystoreFileName);
 
     /* Note: must expire after October 22, 2033, to be in the Android
-    * marketplace.  Android docs recommend "10000" as the expiration # of
-    * days.
-    *
-    * For DNAME, US may not the right country to assign it to.
-    */
+     * marketplace.  Android docs recommend "10000" as the expiration # of
+     * days.
+     *
+     * For DNAME, US may not the right country to assign it to.
+     */
     String[] keytoolCommandline = {
         System.getProperty("java.home") + "/bin/keytool",
         "-genkey",

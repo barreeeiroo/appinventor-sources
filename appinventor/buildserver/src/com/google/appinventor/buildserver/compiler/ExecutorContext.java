@@ -1,33 +1,37 @@
 package com.google.appinventor.buildserver.compiler;
 
-import com.google.appinventor.buildserver.BuildServer.ProgressReporter;
 import com.google.appinventor.buildserver.Project;
 
-import java.io.PrintStream;
+import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
 public class ExecutorContext {
   InitialContext initial;
+  Utils utils;
 
   public ExecutorContext(Project project, Set<String> compTypes, Map<String, Set<String>> compBlocks,
-                                           PrintStream out, PrintStream err, PrintStream userErrors,
-                                           boolean isForCompanion, boolean isForEmulator,
-                                           boolean includeDangerousPermissions, String keystoreFilePath,
-                                           int childProcessRam, String dexCacheDir, String outputFileName,
-                                           ProgressReporter reporter, boolean isAab) {
-    this.initial = new InitialContext(project, compTypes, compBlocks,out, err, userErrors, isForCompanion,
-        isForEmulator, includeDangerousPermissions, keystoreFilePath, childProcessRam, dexCacheDir, outputFileName,
-        reporter, isAab);
+                         Reporter reporter, boolean isForCompanion, boolean isForEmulator,
+                         boolean includeDangerousPermissions, String keystoreFilePath,
+                         int childProcessRam, String dexCacheDir, String outputFileName) {
+    this.initial = new InitialContext(project, compTypes, compBlocks, reporter, isForCompanion,
+        isForEmulator, includeDangerousPermissions, keystoreFilePath, childProcessRam, dexCacheDir, outputFileName);
+    this.utils = new Utils();
+  }
+
+  public Reporter getReporter() {
+    return this.initial.getReporter();
+  }
+
+  public Utils getUtils() {
+    return this.utils;
   }
 
   private class InitialContext {
     private Project project;
     private Set<String> compTypes;
     private Map<String, Set<String>> compBlocks;
-    private PrintStream out;
-    private PrintStream err;
-    private PrintStream userErrors;
+    private Reporter reporter;
     private boolean isForCompanion;
     private boolean isForEmulator;
     private boolean includeDangerousPermissions;
@@ -35,21 +39,15 @@ public class ExecutorContext {
     private int childProcessRam;
     private String dexCacheDir;
     private String outputFileName;
-    private ProgressReporter reporter;
-    private boolean isAab;
 
     public InitialContext(Project project, Set<String> compTypes, Map<String, Set<String>> compBlocks,
-                          PrintStream out, PrintStream err, PrintStream userErrors,
-                          boolean isForCompanion, boolean isForEmulator,
+                          Reporter reporter, boolean isForCompanion, boolean isForEmulator,
                           boolean includeDangerousPermissions, String keystoreFilePath,
-                          int childProcessRam, String dexCacheDir, String outputFileName,
-                          ProgressReporter reporter, boolean isAab) {
+                          int childProcessRam, String dexCacheDir, String outputFileName) {
       this.project = project;
       this.compTypes = compTypes;
       this.compBlocks = compBlocks;
-      this.out = out;
-      this.err = err;
-      this.userErrors = userErrors;
+      this.reporter = reporter;
       this.isForCompanion = isForCompanion;
       this.isForEmulator = isForEmulator;
       this.includeDangerousPermissions = includeDangerousPermissions;
@@ -57,8 +55,6 @@ public class ExecutorContext {
       this.childProcessRam = childProcessRam;
       this.dexCacheDir = dexCacheDir;
       this.outputFileName = outputFileName;
-      this.reporter = reporter;
-      this.isAab = isAab;
     }
 
     public Project getProject() {
@@ -73,16 +69,8 @@ public class ExecutorContext {
       return compBlocks;
     }
 
-    public PrintStream getOut() {
-      return out;
-    }
-
-    public PrintStream getErr() {
-      return err;
-    }
-
-    public PrintStream getUserErrors() {
-      return userErrors;
+    public Reporter getReporter() {
+      return reporter;
     }
 
     public boolean isForCompanion() {
@@ -112,13 +100,15 @@ public class ExecutorContext {
     public String getOutputFileName() {
       return outputFileName;
     }
+  }
 
-    public ProgressReporter getReporter() {
-      return reporter;
-    }
-
-    public boolean isAab() {
-      return isAab;
+  private class Utils {
+    private File createDir(File parentDir, String name) {
+      File dir = new File(parentDir, name);
+      if (!dir.exists()) {
+        dir.mkdir();
+      }
+      return dir;
     }
   }
 }

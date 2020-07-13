@@ -1,17 +1,16 @@
 package com.google.appinventor.buildserver.compiler;
 
-import java.io.IOException;
-
 public interface Task {
   /**
    * Main method to run the task
+   *
    * @return TaskResult
-   * @throws IOException e
    */
-  TaskResult execute() throws IOException;
+  TaskResult execute(ExecutorContext context);
 
   /**
    * Identify the task with a name
+   *
    * @return String
    */
   String getName();

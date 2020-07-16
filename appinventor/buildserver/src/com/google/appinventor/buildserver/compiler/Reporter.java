@@ -19,7 +19,7 @@ public class Reporter {
   private ConsoleColors c;
   private String task;
 
-  private class ConsoleColors {
+  private static class ConsoleColors {
     public String RESET = "\u001B[0m";
     public String BLACK = "\u001B[30m";
     public String RED = "\u001B[31m";
@@ -114,7 +114,7 @@ public class Reporter {
 
   public void taskStart(String name) {
     this.task = name;
-    System.out.println(this.task(c.CYAN) + "Starting Task ");
+    System.out.println(this.task(c.CYAN) + "Starting Task" + c.RESET);
     this.system.println(this.task(null) + "Starting Task");
   }
 

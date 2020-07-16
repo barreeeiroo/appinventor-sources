@@ -154,12 +154,28 @@ public final class ProjectBuilder {
 
         // Generate the compiler context
         Reporter r = new Reporter(reporter);
-        ExecutorContext context = new ExecutorContext(project, componentTypes, componentBlocks, r,
+        /* ExecutorContext context = new ExecutorContext(project, componentTypes, componentBlocks, r,
             isForCompanion, isForEmulator, includeDangerousPermissions, keyStorePath,
-            childProcessRam, dexCachePath, outputFileName);
+            childProcessRam, dexCachePath, outputFileName); */
+        ExecutorContext context = new ExecutorContext.Builder(project)
+            .withTypes(componentTypes)
+            .withBlocks(componentBlocks)
+            .withReporter(r)
+            .withCompanion(isForCompanion)
+            .withEmulator(isForEmulator)
+            .withDangerousPermissions(includeDangerousPermissions)
+            .withKeystore(keyStorePath)
+            .withRam(childProcessRam)
+            .withCache(dexCachePath)
+            .withOutput(outputFileName)
+            .build();
 
         // Invoke YoungAndroid compiler
-        Executor compiler = new Executor(context, ext);
+        Executor compiler = new Executor.Builder()
+            .withContext(context)
+            .withType(ext)
+            .build();
+
         compiler.add(Bundletool.class);
         Future<Boolean> executor = Executors.newSingleThreadExecutor().submit(compiler);
 

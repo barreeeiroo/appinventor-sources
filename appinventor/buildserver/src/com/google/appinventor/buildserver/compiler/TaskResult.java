@@ -28,7 +28,7 @@ public class TaskResult {
    * @return TaskResult(1, Exception)
    */
   public static TaskResult generateError(Exception error) {
-    return new TaskResult(TaskExecutionCodes.SUCCESS_EXIT_CODE, error);
+    return new TaskResult(TaskExecutionCodes.ERROR_EXIT_CODE, error);
   }
 
   /**

@@ -12,4 +12,7 @@ public @interface BuildType {
   boolean apk() default false;
 
   boolean aab() default false;
+
+  public static String APK_EXTENSION = "apk";
+  public static String AAB_EXTENSION = "aab";
 }

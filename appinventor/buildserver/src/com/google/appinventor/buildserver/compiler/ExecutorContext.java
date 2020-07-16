@@ -2,113 +2,151 @@ package com.google.appinventor.buildserver.compiler;
 
 import com.google.appinventor.buildserver.Project;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
 public class ExecutorContext {
-  InitialContext initial;
-  Utils utils;
+  private Project project;
+  private Set<String> compTypes;
+  private Map<String, Set<String>> compBlocks;
+  private Reporter reporter;
+  private boolean isForCompanion;
+  private boolean isForEmulator;
+  private boolean includeDangerousPermissions;
+  private String keystoreFilePath;
+  private int childProcessRam;
+  private String dexCacheDir;
+  private String outputFileName;
 
-  public ExecutorContext(Project project, Set<String> compTypes, Map<String, Set<String>> compBlocks,
-                         Reporter reporter, boolean isForCompanion, boolean isForEmulator,
-                         boolean includeDangerousPermissions, String keystoreFilePath,
-                         int childProcessRam, String dexCacheDir, String outputFileName) {
-    this.initial = new InitialContext(project, compTypes, compBlocks, reporter, isForCompanion,
-        isForEmulator, includeDangerousPermissions, keystoreFilePath, childProcessRam, dexCacheDir, outputFileName);
-    this.utils = new Utils();
-  }
-
-  public Reporter getReporter() {
-    return this.initial.getReporter();
-  }
-
-  public Utils getUtils() {
-    return this.utils;
-  }
-
-  private class InitialContext {
-    private Project project;
+  public static class Builder {
+    private final Project project;
     private Set<String> compTypes;
     private Map<String, Set<String>> compBlocks;
     private Reporter reporter;
-    private boolean isForCompanion;
-    private boolean isForEmulator;
-    private boolean includeDangerousPermissions;
+    private boolean isForCompanion = false;
+    private boolean isForEmulator = false;
+    private boolean includeDangerousPermissions = false;
     private String keystoreFilePath;
-    private int childProcessRam;
-    private String dexCacheDir;
-    private String outputFileName;
+    private int childProcessRam = 2048;
+    private String dexCacheDir = null;
+    private String outputFileName = null;
 
-    public InitialContext(Project project, Set<String> compTypes, Map<String, Set<String>> compBlocks,
-                          Reporter reporter, boolean isForCompanion, boolean isForEmulator,
-                          boolean includeDangerousPermissions, String keystoreFilePath,
-                          int childProcessRam, String dexCacheDir, String outputFileName) {
+    public Builder(Project project) {
       this.project = project;
+    }
+
+    public Builder withTypes(Set<String> compTypes) {
       this.compTypes = compTypes;
+      return this;
+    }
+
+    public Builder withBlocks(Map<String, Set<String>> compBlocks) {
       this.compBlocks = compBlocks;
+      return this;
+    }
+
+    public Builder withReporter(Reporter reporter) {
       this.reporter = reporter;
+      return this;
+    }
+
+    public Builder withCompanion(boolean isForCompanion) {
       this.isForCompanion = isForCompanion;
+      return this;
+    }
+
+    public Builder withEmulator(boolean isForEmulator) {
       this.isForEmulator = isForEmulator;
+      return this;
+    }
+
+    public Builder withDangerousPermissions(boolean includeDangerousPermissions) {
       this.includeDangerousPermissions = includeDangerousPermissions;
+      return this;
+    }
+
+    public Builder withKeystore(String keystoreFilePath) {
       this.keystoreFilePath = keystoreFilePath;
+      return this;
+    }
+
+    public Builder withRam(int childProcessRam) {
       this.childProcessRam = childProcessRam;
+      return this;
+    }
+
+    public Builder withCache(String dexCacheDir) {
       this.dexCacheDir = dexCacheDir;
+      return this;
+    }
+
+    public Builder withOutput(String outputFileName) {
       this.outputFileName = outputFileName;
+      return this;
     }
 
-    public Project getProject() {
-      return project;
-    }
+    public ExecutorContext build() {
+      ExecutorContext context = new ExecutorContext();
+      if (project == null) {
+        System.out.println("[ERROR] ExecutorContext needs Project");
+        return null;
+      } else if (compTypes == null) {
+        System.out.println("[ERROR] ExecutorContext needs CompTypes");
+        return null;
+      } else if (compBlocks == null) {
+        System.out.println("[ERROR] ExecutorContext needs CompBlocks");
+        return null;
+      } else if (reporter == null) {
+        System.out.println("[ERROR] ExecutorContext needs Reporter");
+        return null;
+      } else if (keystoreFilePath == null) {
+        System.out.println("[ERROR] ExecutorContext needs KeystoreFilePath");
+        return null;
+      }
+      context.project = project;
+      context.compTypes = compTypes;
+      context.compBlocks = compBlocks;
+      context.reporter = reporter;
+      context.isForCompanion = isForCompanion;
+      context.isForEmulator = isForEmulator;
+      context.includeDangerousPermissions = includeDangerousPermissions;
+      context.keystoreFilePath = keystoreFilePath;
+      context.dexCacheDir = dexCacheDir;
+      context.outputFileName = outputFileName;
+      context.childProcessRam = childProcessRam;
 
-    public Set<String> getCompTypes() {
-      return compTypes;
-    }
+      System.out.println(this.toString());
 
-    public Map<String, Set<String>> getCompBlocks() {
-      return compBlocks;
-    }
-
-    public Reporter getReporter() {
-      return reporter;
-    }
-
-    public boolean isForCompanion() {
-      return isForCompanion;
-    }
-
-    public boolean isForEmulator() {
-      return isForEmulator;
-    }
-
-    public boolean isIncludeDangerousPermissions() {
-      return includeDangerousPermissions;
-    }
-
-    public String getKeystoreFilePath() {
-      return keystoreFilePath;
-    }
-
-    public int getChildProcessRam() {
-      return childProcessRam;
-    }
-
-    public String getDexCacheDir() {
-      return dexCacheDir;
-    }
-
-    public String getOutputFileName() {
-      return outputFileName;
+      return context;
     }
   }
 
-  private class Utils {
-    private File createDir(File parentDir, String name) {
-      File dir = new File(parentDir, name);
-      if (!dir.exists()) {
-        dir.mkdir();
-      }
-      return dir;
-    }
+  private ExecutorContext() {
+  }
+
+  public Project getProject() {
+    return this.project;
+  }
+
+  public Reporter getReporter() {
+    return this.reporter;
+  }
+
+  @Override
+  public String toString() {
+    return "ExecutorContext{" +
+        "project=" + project +
+        ", compTypes=" + compTypes +
+        ", compBlocks=" + compBlocks +
+        ", reporter=" + reporter +
+        ", isForCompanion=" + isForCompanion +
+        ", isForEmulator=" + isForEmulator +
+        ", includeDangerousPermissions=" + includeDangerousPermissions +
+        ", keystoreFilePath='" + keystoreFilePath + '\'' +
+        ", childProcessRam=" + childProcessRam +
+        ", dexCacheDir='" + dexCacheDir + '\'' +
+        ", outputFileName='" + outputFileName + '\'' +
+        '}';
   }
 }
+

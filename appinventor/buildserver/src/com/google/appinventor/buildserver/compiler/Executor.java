@@ -7,14 +7,46 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 public class Executor implements Callable<Boolean> {
-  private List<Class<? extends Task>> tasks;
-  private final ExecutorContext context;
-  private final String ext;
+  private final List<Class<? extends Task>> tasks;
+  private ExecutorContext context;
+  private String ext = BuildType.APK_EXTENSION;
 
-  public Executor(ExecutorContext context, String ext) {
-    this.context = context;
+  public static class Builder {
+    private ExecutorContext context;
+    private String ext;
+
+    public Builder() {
+    }
+
+    public Builder withContext(ExecutorContext context) {
+      this.context = context;
+      return this;
+    }
+
+    public Builder withType(String ext) {
+      if (ext == null || !ext.equals(BuildType.APK_EXTENSION) && !ext.equals(BuildType.AAB_EXTENSION)) {
+        System.out.println("[ERROR] BuildType '" + ext + "' is not supported!");
+      } else {
+        this.ext = ext;
+      }
+      return this;
+    }
+
+    public Executor build() {
+      if (context == null) {
+        System.out.println("[ERROR] ExecutorContext was not provided to Executor");
+        return null;
+      }
+
+      Executor executor = new Executor();
+      executor.context = context;
+      executor.ext = ext;
+      return executor;
+    }
+  }
+
+  private Executor() {
     this.tasks = new ArrayList<>();
-    this.ext = ext;
   }
 
   public Executor add(Class<? extends Task> task) {
@@ -25,12 +57,12 @@ public class Executor implements Callable<Boolean> {
 
   @Override
   public Boolean call() {
-    setProgress(0);
+    context.getReporter().setProgress(0);
     int TASKS_SIZE = this.tasks.size();
 
     if (TASKS_SIZE == 0) {
       context.getReporter().warn("No tasks were executed");
-      setProgress(100);
+      context.getReporter().setProgress(100);
       return true;
     }
 
@@ -58,14 +90,14 @@ public class Executor implements Callable<Boolean> {
       if (task.isAnnotationPresent(BuildType.class)) {
         BuildType buildType = task.getAnnotation(BuildType.class);
         switch (ext) {
-          case "aab":
+          case BuildType.AAB_EXTENSION:
             if (!buildType.aab()) {
               context.getReporter().error("Task " + taskName + " does not support builds on AABs!");
               return false;
             }
             break;
           default:
-          case "apk":
+          case BuildType.APK_EXTENSION:
             if (!buildType.apk()) {
               context.getReporter().error("Task " + taskName + " does not support builds on APKs!");
               return false;
@@ -101,7 +133,12 @@ public class Executor implements Callable<Boolean> {
     return true;
   }
 
-  private void setProgress(int p) {
-
+  @Override
+  public String toString() {
+    return "Executor{" +
+        "tasks=" + tasks +
+        ", context=" + context +
+        ", ext='" + ext + '\'' +
+        '}';
   }
 }

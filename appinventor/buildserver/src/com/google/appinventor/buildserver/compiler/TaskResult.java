@@ -27,6 +27,10 @@ public class TaskResult {
    *
    * @return TaskResult(1, Exception)
    */
+  public static TaskResult generateError(String error) {
+    return TaskResult.generateError(new Exception(error));
+  }
+
   public static TaskResult generateError(Exception error) {
     return new TaskResult(TaskExecutionCodes.ERROR_EXIT_CODE, error);
   }

@@ -2,11 +2,13 @@ package com.google.appinventor.buildserver.compiler;
 
 import com.google.appinventor.buildserver.Project;
 
+import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
 public class ExecutorContext {
   private Project project;
+  private String ext;
   private Set<String> compTypes;
   private Map<String, Set<String>> compBlocks;
   private Reporter reporter;
@@ -18,8 +20,16 @@ public class ExecutorContext {
   private String dexCacheDir;
   private String outputFileName;
 
+  private File buildDir;
+  private File deployDir;
+  private File resDir;
+  private File drawableDir;
+  private File tmpDir;
+  private File libsDir;
+
   public static class Builder {
     private final Project project;
+    private final String ext;
     private Set<String> compTypes;
     private Map<String, Set<String>> compBlocks;
     private Reporter reporter;
@@ -31,8 +41,9 @@ public class ExecutorContext {
     private String dexCacheDir = null;
     private String outputFileName = null;
 
-    public Builder(Project project) {
+    public Builder(Project project, String ext) {
       this.project = project;
+      this.ext = ext;
     }
 
     public Builder withTypes(Set<String> compTypes) {
@@ -104,6 +115,7 @@ public class ExecutorContext {
         return null;
       }
       context.project = project;
+      context.ext = ext;
       context.compTypes = compTypes;
       context.compBlocks = compBlocks;
       context.reporter = reporter;
@@ -114,6 +126,13 @@ public class ExecutorContext {
       context.dexCacheDir = dexCacheDir;
       context.outputFileName = outputFileName;
       context.childProcessRam = childProcessRam;
+
+      context.buildDir = ExecutorUtils.createDir(project.getBuildDirectory());
+      context.deployDir = ExecutorUtils.createDir(context.buildDir, "deploy");
+      context.resDir = ExecutorUtils.createDir(context.buildDir, "res");
+      context.drawableDir = ExecutorUtils.createDir(context.buildDir, "drawable");
+      context.tmpDir = ExecutorUtils.createDir(context.buildDir, "tmp");
+      context.libsDir = ExecutorUtils.createDir(context.buildDir, "libs");
 
       System.out.println(this.toString());
 
@@ -126,6 +145,45 @@ public class ExecutorContext {
 
   public Project getProject() {
     return this.project;
+  }
+
+  public int getMaxMem() {
+    return this.childProcessRam;
+  }
+
+  public String getKeystoreFilePath() {
+    return this.keystoreFilePath;
+  }
+
+  public File getBuildDir() {
+    return this.buildDir;
+  }
+
+  public File getDeployDir() {
+    return this.getDeployDir();
+  }
+
+  public File getDeployFile() {
+    if (this.outputFileName != null) {
+      return new File(this.deployDir, this.outputFileName);
+    }
+    return new File(this.deployDir, this.project.getProjectName() + "." + ext);
+  }
+
+  public File getResDir() {
+    return this.getResDir();
+  }
+
+  public File getDrawableDir() {
+    return this.getDrawableDir();
+  }
+
+  public File getTmpDir() {
+    return this.getTmpDir();
+  }
+
+  public File getLibsDir() {
+    return this.getLibsDir();
   }
 
   public Reporter getReporter() {
@@ -146,6 +204,8 @@ public class ExecutorContext {
         ", childProcessRam=" + childProcessRam +
         ", dexCacheDir='" + dexCacheDir + '\'' +
         ", outputFileName='" + outputFileName + '\'' +
+        ", buildDir=" + buildDir +
+        ", deployDir=" + deployDir +
         '}';
   }
 }

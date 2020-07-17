@@ -157,7 +157,7 @@ public final class ProjectBuilder {
         /* ExecutorContext context = new ExecutorContext(project, componentTypes, componentBlocks, r,
             isForCompanion, isForEmulator, includeDangerousPermissions, keyStorePath,
             childProcessRam, dexCachePath, outputFileName); */
-        ExecutorContext context = new ExecutorContext.Builder(project)
+        ExecutorContext context = new ExecutorContext.Builder(project, ext)
             .withTypes(componentTypes)
             .withBlocks(componentBlocks)
             .withReporter(r)

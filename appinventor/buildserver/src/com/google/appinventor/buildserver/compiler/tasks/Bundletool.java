@@ -1,5 +1,6 @@
 package com.google.appinventor.buildserver.compiler.tasks;
 
+import com.google.appinventor.buildserver.Execution;
 import com.google.appinventor.buildserver.compiler.*;
 import com.google.common.io.Files;
 
@@ -7,7 +8,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 
@@ -22,23 +26,23 @@ public class Bundletool implements Task {
 
     context.getReporter().info("Creating structure");
     aab.setROOT(ExecutorUtils.createDir(context.getProject().getBuildDirectory(), "aab"));
-    if (!createStructure()) {
-      return TaskResult.generateError(new Exception("Could not create AAB structure"));
+    if (!createStructure(context)) {
+      return TaskResult.generateError("Could not create AAB structure");
     }
 
     context.getReporter().info("Extracting protobuf resources");
-    if (!extractProtobuf()) {
-      return TaskResult.generateError(new Exception("Could not extract protobuf"));
+    if (!extractProtobuf(context)) {
+      return TaskResult.generateError("Could not extract protobuf");
     }
 
     context.getReporter().info("Running bundletool");
-    if (!bundletool()) {
-      return TaskResult.generateError(new Exception("Could not run bundletool"));
+    if (!bundletool(context)) {
+      return TaskResult.generateError("Could not run bundletool");
     }
 
     context.getReporter().info("Signing bundle");
-    if (!jarsigner()) {
-      return TaskResult.generateError(new Exception("Could not sign bundle"));
+    if (!jarsigner(context)) {
+      return TaskResult.generateError("Could not sign bundle");
     }
     return TaskResult.generateSuccess();
   }
@@ -48,7 +52,7 @@ public class Bundletool implements Task {
     return TASK_NAME;
   }
 
-  private boolean createStructure() {
+  private boolean createStructure(ExecutorContext context) {
     // Manifest is extracted from the protobuffed APK
     aab.setManifestDir(ExecutorUtils.createDir(aab.getROOT(), "manifest"));
 
@@ -59,14 +63,15 @@ public class Bundletool implements Task {
     aab.setAssetsDir(ExecutorUtils.createDir(aab.getROOT(), "assets"));
 
     aab.setDexDir(ExecutorUtils.createDir(aab.getROOT(), "dex"));
-    File[] dexFiles = new File(originalDexDir).listFiles();
+    context.getReporter().log("Moving dex files");
+    File[] dexFiles = context.getTmpDir().listFiles();
     if (dexFiles != null) {
       for (File dex : dexFiles) {
         if (dex.isFile()) {
           try {
             Files.move(dex, new File(aab.getDexDir(), dex.getName()));
           } catch (IOException e) {
-            e.printStackTrace();
+            context.getReporter().error(e.getMessage(), true);
             return false;
           }
         }
@@ -74,19 +79,110 @@ public class Bundletool implements Task {
     }
 
     aab.setLibDir(ExecutorUtils.createDir(aab.getROOT(), "lib"));
-    File[] libFiles = originalLibsDir.listFiles();
+    context.getReporter().log("Moving lib files");
+    File[] libFiles = context.getLibsDir().listFiles();
     if (libFiles != null) {
       for (File lib : libFiles) {
         try {
           Files.move(lib, new File(ExecutorUtils.createDir(aab.getROOT(), "lib"), lib.getName()));
         } catch (IOException e) {
-          e.printStackTrace();
+          context.getReporter().error(e.getMessage(), true);
           return false;
         }
       }
     }
 
     return true;
+  }
+
+  private boolean extractProtobuf(ExecutorContext context) {
+    try (ZipInputStream is = new ZipInputStream(new FileInputStream(aab.getProtoApk()))) {
+      ZipEntry entry;
+      byte[] buffer = new byte[1024];
+      while ((entry = is.getNextEntry()) != null) {
+        String n = entry.getName();
+        File f = null;
+        if (n.equals("AndroidManifest.xml")) {
+          context.getReporter().log("Found AndroidManifest.xml");
+          f = new File(aab.getManifestDir(), n);
+        } else if (n.equals("resources.pb")) {
+          context.getReporter().log("Found resources.pb");
+          f = new File(aab.getROOT(), n);
+        } else if (n.startsWith("assets")) {
+          f = new File(aab.getAssetsDir(), n.substring(("assets").length()));
+        } else if (n.startsWith("res")) {
+          f = new File(aab.getResDir(), n.substring(("res").length()));
+        }
+
+        if (f != null) {
+          f.getParentFile().mkdirs();
+          FileOutputStream fos = new FileOutputStream(f);
+          int len;
+          while ((len = is.read(buffer)) > 0) {
+            fos.write(buffer, 0, len);
+          }
+          fos.close();
+        }
+      }
+
+      is.close();
+      return true;
+    } catch (IOException e) {
+      context.getReporter().error(e.getMessage(), true);
+    }
+    return false;
+  }
+
+  private boolean bundletool(ExecutorContext context) {
+    aab.setBASE(new File(context.getProject().getBuildDirectory(), "base.zip"));
+
+    if (!AabZipper.zipBundle(aab.getROOT(), aab.getBASE(), aab.getROOT().getName() + File.separator)) {
+      context.getReporter().error("Could not zip files for the bundle", true);
+      return false;
+    }
+
+    String bundletool = ExecutorResources.bundletool();
+    if (bundletool == null) {
+      context.getReporter().error("Bundletool jar file was not found", true);
+      return false;
+    }
+
+    List<String> bundletoolCommandLine = new ArrayList<String>();
+    bundletoolCommandLine.add(System.getProperty("java.home") + "/bin/java");
+    bundletoolCommandLine.add("-jar");
+    bundletoolCommandLine.add("-mx" + context.getMaxMem() + "M");
+    bundletoolCommandLine.add(bundletool);
+    bundletoolCommandLine.add("build-bundle");
+    bundletoolCommandLine.add("--modules=" + aab.getBASE());
+    bundletoolCommandLine.add("--output=" + context.getDeployFile().getAbsolutePath());
+    String[] bundletoolBuildCommandLine = bundletoolCommandLine.toArray(new String[0]);
+
+    return Execution.execute(null, bundletoolBuildCommandLine, System.out, System.err);
+  }
+
+  private boolean jarsigner(ExecutorContext context) {
+    List<String> jarsignerCommandLine = new ArrayList<String>();
+
+    String jarsigner = ExecutorResources.jarsigner();
+    if (jarsigner == null) {
+      context.getReporter().error("Jarsigner executable file was not found", true);
+      return false;
+    }
+
+    jarsignerCommandLine.add(jarsigner);
+    jarsignerCommandLine.add("-sigalg");
+    jarsignerCommandLine.add("SHA256withRSA");
+    jarsignerCommandLine.add("-digestalg");
+    jarsignerCommandLine.add("SHA-256");
+    jarsignerCommandLine.add("-keystore");
+    jarsignerCommandLine.add(context.getKeystoreFilePath());
+    jarsignerCommandLine.add("-storepass");
+    jarsignerCommandLine.add("android");
+    jarsignerCommandLine.add(context.getDeployFile().getAbsolutePath());
+    jarsignerCommandLine.add("AndroidKey");
+    String[] jarsignerSignCommandLine = jarsignerCommandLine.toArray(new String[0]);
+
+    return Execution.execute(null, jarsignerSignCommandLine, System.out, System.err);
   }
 }
 

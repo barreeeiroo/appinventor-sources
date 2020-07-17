@@ -10,14 +10,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class ExecutorUtils {
-  private static final ConcurrentMap<String, File> resources = new ConcurrentHashMap<String, File>();
+  private static final ConcurrentMap<String, File> resources = new ConcurrentHashMap<>();
 
   private ExecutorUtils() {
   }
 
   public static File createDir(File dir) {
     if (!dir.exists()) {
-      dir.mkdir();
+      if (!dir.mkdir()) {
+        System.out.println("[WARN] Could not create directory: " + dir);
+      }
     }
     return dir;
   }
@@ -25,7 +27,9 @@ public final class ExecutorUtils {
   public static File createDir(File parentDir, String name) {
     File dir = new File(parentDir, name);
     if (!dir.exists()) {
-      dir.mkdir();
+      if (!dir.mkdir()) {
+        System.out.println("[WARN] Could not create directory: " + dir);
+      }
     }
     return dir;
   }
@@ -35,23 +39,27 @@ public final class ExecutorUtils {
       File file = resources.get(resourcePath);
       if (file == null) {
         String basename = PathUtil.basename(resourcePath);
-        String prefix;
+        StringBuilder prefix;
         String suffix;
         int lastDot = basename.lastIndexOf(".");
         if (lastDot != -1) {
-          prefix = basename.substring(0, lastDot);
+          prefix = new StringBuilder(basename.substring(0, lastDot));
           suffix = basename.substring(lastDot);
         } else {
-          prefix = basename;
+          prefix = new StringBuilder(basename);
           suffix = "";
         }
         while (prefix.length() < 3) {
-          prefix = prefix + "_";
+          prefix.append("_");
         }
-        file = File.createTempFile(prefix, suffix);
-        file.setExecutable(true);
+        file = File.createTempFile(prefix.toString(), suffix);
+        if (!file.setExecutable(true)) {
+          System.out.println("[WARN] Could not mark resources as executable: " + file);
+        }
         file.deleteOnExit();
-        file.getParentFile().mkdirs();
+        if (!file.getParentFile().mkdirs()) {
+          System.out.println("[WARN] Could not make directory: " + file.getParentFile());
+        }
         Files.copy(Resources.newInputStreamSupplier(Executor.class.getResource(resourcePath)),
             file);
         resources.put(resourcePath, file);

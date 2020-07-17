@@ -1,8 +1,9 @@
 package com.google.appinventor.buildserver.compiler;
 
 import com.google.appinventor.buildserver.Project;
+import com.google.appinventor.buildserver.compiler.context.Paths;
+import org.codehaus.jettison.json.JSONArray;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,12 +21,12 @@ public class ExecutorContext {
   private String dexCacheDir;
   private String outputFileName;
 
-  private File buildDir;
-  private File deployDir;
-  private File resDir;
-  private File drawableDir;
-  private File tmpDir;
-  private File libsDir;
+  private JSONArray simpleCompsBuildInfo;
+  private JSONArray extCompsBuildInfo;
+  private Set<String> simpleCompTypes;  // types needed by the project
+  private Set<String> extCompTypes; // types needed by the project
+
+  private Paths paths;
 
   public static class Builder {
     private final Project project;
@@ -127,12 +128,17 @@ public class ExecutorContext {
       context.outputFileName = outputFileName;
       context.childProcessRam = childProcessRam;
 
-      context.buildDir = ExecutorUtils.createDir(project.getBuildDirectory());
-      context.deployDir = ExecutorUtils.createDir(context.buildDir, "deploy");
-      context.resDir = ExecutorUtils.createDir(context.buildDir, "res");
-      context.drawableDir = ExecutorUtils.createDir(context.buildDir, "drawable");
-      context.tmpDir = ExecutorUtils.createDir(context.buildDir, "tmp");
-      context.libsDir = ExecutorUtils.createDir(context.buildDir, "libs");
+      if (this.outputFileName != null) {
+        context.paths = new Paths(this.outputFileName);
+      } else {
+        context.paths = new Paths(this.project.getProjectName() + "." + ext);
+      }
+      context.paths.setBuildDir(ExecutorUtils.createDir(project.getBuildDirectory()));
+      context.paths.setDeployDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "deploy"));
+      context.paths.setResDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "res"));
+      context.paths.setDrawableDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "drawable"));
+      context.paths.setTmpDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "tmp"));
+      context.paths.setLibsDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "libs"));
 
       System.out.println(this.toString());
 
@@ -144,50 +150,87 @@ public class ExecutorContext {
   }
 
   public Project getProject() {
-    return this.project;
+    return project;
   }
 
-  public int getMaxMem() {
-    return this.childProcessRam;
+  public String getExt() {
+    return ext;
   }
 
-  public String getKeystoreFilePath() {
-    return this.keystoreFilePath;
+  public Set<String> getCompTypes() {
+    return compTypes;
   }
 
-  public File getBuildDir() {
-    return this.buildDir;
-  }
-
-  public File getDeployDir() {
-    return this.getDeployDir();
-  }
-
-  public File getDeployFile() {
-    if (this.outputFileName != null) {
-      return new File(this.deployDir, this.outputFileName);
-    }
-    return new File(this.deployDir, this.project.getProjectName() + "." + ext);
-  }
-
-  public File getResDir() {
-    return this.getResDir();
-  }
-
-  public File getDrawableDir() {
-    return this.getDrawableDir();
-  }
-
-  public File getTmpDir() {
-    return this.getTmpDir();
-  }
-
-  public File getLibsDir() {
-    return this.getLibsDir();
+  public Map<String, Set<String>> getCompBlocks() {
+    return compBlocks;
   }
 
   public Reporter getReporter() {
-    return this.reporter;
+    return reporter;
+  }
+
+  public boolean isForCompanion() {
+    return isForCompanion;
+  }
+
+  public boolean isForEmulator() {
+    return isForEmulator;
+  }
+
+  public boolean isIncludeDangerousPermissions() {
+    return includeDangerousPermissions;
+  }
+
+  public String getKeystoreFilePath() {
+    return keystoreFilePath;
+  }
+
+  public int getChildProcessRam() {
+    return childProcessRam;
+  }
+
+  public String getDexCacheDir() {
+    return dexCacheDir;
+  }
+
+  public String getOutputFileName() {
+    return outputFileName;
+  }
+
+  public JSONArray getSimpleCompsBuildInfo() {
+    return simpleCompsBuildInfo;
+  }
+
+  public JSONArray getExtCompsBuildInfo() {
+    return extCompsBuildInfo;
+  }
+
+  public Set<String> getSimpleCompTypes() {
+    return simpleCompTypes;
+  }
+
+  public Set<String> getExtCompTypes() {
+    return extCompTypes;
+  }
+
+  public Paths getPaths() {
+    return paths;
+  }
+
+  public void setSimpleCompsBuildInfo(JSONArray simpleCompsBuildInfo) {
+    this.simpleCompsBuildInfo = simpleCompsBuildInfo;
+  }
+
+  public void setExtCompsBuildInfo(JSONArray extCompsBuildInfo) {
+    this.extCompsBuildInfo = extCompsBuildInfo;
+  }
+
+  public void setSimpleCompTypes(Set<String> simpleCompTypes) {
+    this.simpleCompTypes = simpleCompTypes;
+  }
+
+  public void setExtCompTypes(Set<String> extCompTypes) {
+    this.extCompTypes = extCompTypes;
   }
 
   @Override
@@ -204,8 +247,6 @@ public class ExecutorContext {
         ", childProcessRam=" + childProcessRam +
         ", dexCacheDir='" + dexCacheDir + '\'' +
         ", outputFileName='" + outputFileName + '\'' +
-        ", buildDir=" + buildDir +
-        ", deployDir=" + deployDir +
         '}';
   }
 }

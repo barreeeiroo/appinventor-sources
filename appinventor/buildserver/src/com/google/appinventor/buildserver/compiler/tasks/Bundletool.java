@@ -64,7 +64,7 @@ public class Bundletool implements Task {
 
     aab.setDexDir(ExecutorUtils.createDir(aab.getROOT(), "dex"));
     context.getReporter().log("Moving dex files");
-    File[] dexFiles = context.getTmpDir().listFiles();
+    File[] dexFiles = context.getPaths().getTmpDir().listFiles();
     if (dexFiles != null) {
       for (File dex : dexFiles) {
         if (dex.isFile()) {
@@ -80,7 +80,7 @@ public class Bundletool implements Task {
 
     aab.setLibDir(ExecutorUtils.createDir(aab.getROOT(), "lib"));
     context.getReporter().log("Moving lib files");
-    File[] libFiles = context.getLibsDir().listFiles();
+    File[] libFiles = context.getPaths().getLibsDir().listFiles();
     if (libFiles != null) {
       for (File lib : libFiles) {
         try {
@@ -154,7 +154,7 @@ public class Bundletool implements Task {
     bundletoolCommandLine.add(bundletool);
     bundletoolCommandLine.add("build-bundle");
     bundletoolCommandLine.add("--modules=" + aab.getBASE());
-    bundletoolCommandLine.add("--output=" + context.getDeployFile().getAbsolutePath());
+    bundletoolCommandLine.add("--output=" + context.getPaths().getDeployFile().getAbsolutePath());
     String[] bundletoolBuildCommandLine = bundletoolCommandLine.toArray(new String[0]);
 
     return Execution.execute(null, bundletoolBuildCommandLine, System.out, System.err);
@@ -178,7 +178,7 @@ public class Bundletool implements Task {
     jarsignerCommandLine.add(context.getKeystoreFilePath());
     jarsignerCommandLine.add("-storepass");
     jarsignerCommandLine.add("android");
-    jarsignerCommandLine.add(context.getDeployFile().getAbsolutePath());
+    jarsignerCommandLine.add(context.getPaths().getDeployFile().getAbsolutePath());
     jarsignerCommandLine.add("AndroidKey");
     String[] jarsignerSignCommandLine = jarsignerCommandLine.toArray(new String[0]);
 

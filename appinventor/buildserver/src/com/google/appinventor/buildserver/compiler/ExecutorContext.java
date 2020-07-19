@@ -1,9 +1,12 @@
 package com.google.appinventor.buildserver.compiler;
 
 import com.google.appinventor.buildserver.Project;
+import com.google.appinventor.buildserver.compiler.context.JsonInfo;
+import com.google.appinventor.buildserver.compiler.context.Resources;
 import com.google.appinventor.buildserver.compiler.context.Paths;
 import org.codehaus.jettison.json.JSONArray;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +29,11 @@ public class ExecutorContext {
   private Set<String> simpleCompTypes;  // types needed by the project
   private Set<String> extCompTypes; // types needed by the project
 
+  private Map<String, String> extTypePathCache;
+
   private Paths paths;
+  private Resources resources;
+  private JsonInfo jsonInfo;
 
   public static class Builder {
     private final Project project;
@@ -140,6 +147,11 @@ public class ExecutorContext {
       context.paths.setTmpDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "tmp"));
       context.paths.setLibsDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "libs"));
 
+      context.resources = new Resources();
+      context.jsonInfo = new JsonInfo();
+
+      context.extTypePathCache = new HashMap<>();
+
       System.out.println(this.toString());
 
       return context;
@@ -233,10 +245,27 @@ public class ExecutorContext {
     this.extCompTypes = extCompTypes;
   }
 
+  public String getResource(String resource) {
+    return resources.getResource(resource);
+  }
+
+  public JsonInfo getJsonInfo() {
+    return this.jsonInfo;
+  }
+
+  public Resources getResources() {
+    return resources;
+  }
+
+  public Map<String, String> getExtTypePathCache() {
+    return this.extTypePathCache;
+  }
+
   @Override
   public String toString() {
     return "ExecutorContext{" +
         "project=" + project +
+        ", ext='" + ext + '\'' +
         ", compTypes=" + compTypes +
         ", compBlocks=" + compBlocks +
         ", reporter=" + reporter +
@@ -247,6 +276,13 @@ public class ExecutorContext {
         ", childProcessRam=" + childProcessRam +
         ", dexCacheDir='" + dexCacheDir + '\'' +
         ", outputFileName='" + outputFileName + '\'' +
+        ", simpleCompsBuildInfo=" + simpleCompsBuildInfo +
+        ", extCompsBuildInfo=" + extCompsBuildInfo +
+        ", simpleCompTypes=" + simpleCompTypes +
+        ", extCompTypes=" + extCompTypes +
+        ", extTypePathCache=" + extTypePathCache +
+        ", paths=" + paths +
+        ", resources=" + resources +
         '}';
   }
 }

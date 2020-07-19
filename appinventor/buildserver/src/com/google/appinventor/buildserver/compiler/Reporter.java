@@ -93,7 +93,7 @@ public class Reporter {
 
   public void info(String message, boolean user) {
     String text = "INFO: " + message;
-    System.out.println(task(c.BLUE) + text + c.RESET);
+    System.out.println(task(c.CYAN) + text + c.RESET);
     this.system.println(task(null) + text);
     if (user) {
       this.user.println(task(null) + message);
@@ -105,7 +105,7 @@ public class Reporter {
   }
 
   public void log(String message, boolean user) {
-    System.out.println(task(null) + message);
+    System.out.println(task(c.WHITE) + message);
     this.system.println(task(null) + message);
     if (user) {
       this.user.println(task(null) + message);
@@ -114,7 +114,7 @@ public class Reporter {
 
   public void taskStart(String name) {
     this.task = name;
-    System.out.println(this.task(c.CYAN) + "Starting Task" + c.RESET);
+    System.out.println(this.task(c.BLUE) + "Starting Task" + c.RESET);
     this.system.println(this.task(null) + "Starting Task");
   }
 

@@ -2,6 +2,7 @@ package com.google.appinventor.buildserver.compiler.tasks;
 
 import com.google.appinventor.buildserver.Execution;
 import com.google.appinventor.buildserver.compiler.*;
+import com.google.appinventor.buildserver.compiler.context.Resources;
 import com.google.common.io.Files;
 
 import java.io.File;
@@ -141,7 +142,7 @@ public class Bundletool implements Task {
       return false;
     }
 
-    String bundletool = ExecutorResources.bundletool();
+    String bundletool = context.getResources().bundletool();
     if (bundletool == null) {
       context.getReporter().error("Bundletool jar file was not found", true);
       return false;
@@ -150,7 +151,7 @@ public class Bundletool implements Task {
     List<String> bundletoolCommandLine = new ArrayList<String>();
     bundletoolCommandLine.add(System.getProperty("java.home") + "/bin/java");
     bundletoolCommandLine.add("-jar");
-    bundletoolCommandLine.add("-mx" + context.getMaxMem() + "M");
+    bundletoolCommandLine.add("-mx" + context.getChildProcessRam() + "M");
     bundletoolCommandLine.add(bundletool);
     bundletoolCommandLine.add("build-bundle");
     bundletoolCommandLine.add("--modules=" + aab.getBASE());
@@ -163,7 +164,7 @@ public class Bundletool implements Task {
   private boolean jarsigner(ExecutorContext context) {
     List<String> jarsignerCommandLine = new ArrayList<String>();
 
-    String jarsigner = ExecutorResources.jarsigner();
+    String jarsigner = context.getResources().jarsigner();
     if (jarsigner == null) {
       context.getReporter().error("Jarsigner executable file was not found", true);
       return false;

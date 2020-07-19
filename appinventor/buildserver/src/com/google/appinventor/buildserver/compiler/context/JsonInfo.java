@@ -1,77 +1,65 @@
 package com.google.appinventor.buildserver.compiler.context;
 
+import com.google.appinventor.buildserver.compiler.BuildType;
 import com.google.common.collect.Sets;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+
+@BuildType(apk = true, aab = true)
 public class JsonInfo {
-  private ConcurrentMap<String, Set<String>> assetsNeeded = new ConcurrentHashMap<String, Set<String>>();
-  private ConcurrentMap<String, Set<String>> activitiesNeeded = new ConcurrentHashMap<String, Set<String>>();
-  private ConcurrentMap<String, Set<String>> broadcastReceiversNeeded = new ConcurrentHashMap<String, Set<String>>();
-  private ConcurrentMap<String, Set<String>> libsNeeded = new ConcurrentHashMap<String, Set<String>>();
-  private ConcurrentMap<String, Set<String>> nativeLibsNeeded = new ConcurrentHashMap<String, Set<String>>();
-  private ConcurrentMap<String, Set<String>> permissionsNeeded = new ConcurrentHashMap<String, Set<String>>();
-  private ConcurrentMap<String, Set<String>> minSdksNeeded = new ConcurrentHashMap<String, Set<String>>();
-  private Set<String> uniqueLibsNeeded = Sets.newHashSet();
-  private ConcurrentMap<String, Map<String, Map<String, Set<String>>>> conditionals = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Set<String>> assetsNeeded;
+  private final ConcurrentMap<String, Set<String>> activitiesNeeded;
+  private final ConcurrentMap<String, Set<String>> broadcastReceiversNeeded;
+  private final ConcurrentMap<String, Set<String>> libsNeeded;
+  private final ConcurrentMap<String, Set<String>> nativeLibsNeeded;
+  private final ConcurrentMap<String, Set<String>> permissionsNeeded;
+  private final ConcurrentMap<String, Set<String>> minSdksNeeded;
+  private final ConcurrentMap<String, Set<String>> componentBroadcastReceiver;
+
+  private Set<String> uniqueLibsNeeded;
+
+  public JsonInfo() {
+    assetsNeeded = new ConcurrentHashMap<>();
+    activitiesNeeded = new ConcurrentHashMap<>();
+    broadcastReceiversNeeded = new ConcurrentHashMap<>();
+    libsNeeded = new ConcurrentHashMap<>();
+    nativeLibsNeeded = new ConcurrentHashMap<>();
+    permissionsNeeded = new ConcurrentHashMap<>();
+    minSdksNeeded = new ConcurrentHashMap<>();
+    componentBroadcastReceiver = new ConcurrentHashMap<>();
+
+    uniqueLibsNeeded = Sets.newHashSet();
+  }
 
   public ConcurrentMap<String, Set<String>> getAssetsNeeded() {
     return assetsNeeded;
-  }
-
-  public void setAssetsNeeded(ConcurrentMap<String, Set<String>> assetsNeeded) {
-    this.assetsNeeded = assetsNeeded;
   }
 
   public ConcurrentMap<String, Set<String>> getActivitiesNeeded() {
     return activitiesNeeded;
   }
 
-  public void setActivitiesNeeded(ConcurrentMap<String, Set<String>> activitiesNeeded) {
-    this.activitiesNeeded = activitiesNeeded;
-  }
-
   public ConcurrentMap<String, Set<String>> getBroadcastReceiversNeeded() {
     return broadcastReceiversNeeded;
-  }
-
-  public void setBroadcastReceiversNeeded(ConcurrentMap<String, Set<String>> broadcastReceiversNeeded) {
-    this.broadcastReceiversNeeded = broadcastReceiversNeeded;
   }
 
   public ConcurrentMap<String, Set<String>> getLibsNeeded() {
     return libsNeeded;
   }
 
-  public void setLibsNeeded(ConcurrentMap<String, Set<String>> libsNeeded) {
-    this.libsNeeded = libsNeeded;
-  }
-
   public ConcurrentMap<String, Set<String>> getNativeLibsNeeded() {
     return nativeLibsNeeded;
-  }
-
-  public void setNativeLibsNeeded(ConcurrentMap<String, Set<String>> nativeLibsNeeded) {
-    this.nativeLibsNeeded = nativeLibsNeeded;
   }
 
   public ConcurrentMap<String, Set<String>> getPermissionsNeeded() {
     return permissionsNeeded;
   }
 
-  public void setPermissionsNeeded(ConcurrentMap<String, Set<String>> permissionsNeeded) {
-    this.permissionsNeeded = permissionsNeeded;
-  }
-
   public ConcurrentMap<String, Set<String>> getMinSdksNeeded() {
     return minSdksNeeded;
-  }
-
-  public void setMinSdksNeeded(ConcurrentMap<String, Set<String>> minSdksNeeded) {
-    this.minSdksNeeded = minSdksNeeded;
   }
 
   public Set<String> getUniqueLibsNeeded() {
@@ -82,12 +70,8 @@ public class JsonInfo {
     this.uniqueLibsNeeded = uniqueLibsNeeded;
   }
 
-  public ConcurrentMap<String, Map<String, Map<String, Set<String>>>> getConditionals() {
-    return conditionals;
-  }
-
-  public void setConditionals(ConcurrentMap<String, Map<String, Map<String, Set<String>>>> conditionals) {
-    this.conditionals = conditionals;
+  public ConcurrentMap<String, Set<String>> getComponentBroadcastReceiver() {
+    return componentBroadcastReceiver;
   }
 
   @Override
@@ -100,8 +84,8 @@ public class JsonInfo {
         ", nativeLibsNeeded=" + nativeLibsNeeded +
         ", permissionsNeeded=" + permissionsNeeded +
         ", minSdksNeeded=" + minSdksNeeded +
+        ", componentBroadcastReceiver=" + componentBroadcastReceiver +
         ", uniqueLibsNeeded=" + uniqueLibsNeeded +
-        ", conditionals=" + conditionals +
         '}';
   }
 }

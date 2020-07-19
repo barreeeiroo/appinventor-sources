@@ -10,6 +10,8 @@ import com.google.appinventor.buildserver.compiler.Executor;
 import com.google.appinventor.buildserver.compiler.ExecutorContext;
 import com.google.appinventor.buildserver.compiler.Reporter;
 import com.google.appinventor.buildserver.compiler.tasks.Bundletool;
+import com.google.appinventor.buildserver.compiler.tasks.LoadJsonInfo;
+import com.google.appinventor.buildserver.compiler.tasks.ReadBuildInfo;
 import com.google.appinventor.common.utils.StringUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -176,6 +178,8 @@ public final class ProjectBuilder {
             .withType(ext)
             .build();
 
+        compiler.add(ReadBuildInfo.class);
+        compiler.add(LoadJsonInfo.class);
         compiler.add(Bundletool.class);
         Future<Boolean> executor = Executors.newSingleThreadExecutor().submit(compiler);
 

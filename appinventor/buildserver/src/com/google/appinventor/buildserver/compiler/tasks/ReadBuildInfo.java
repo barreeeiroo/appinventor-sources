@@ -1,12 +1,8 @@
 package com.google.appinventor.buildserver.compiler.tasks;
 
-import com.google.appinventor.buildserver.compiler.ExecutorContext;
-import com.google.appinventor.buildserver.compiler.ExecutorResources;
-import com.google.appinventor.buildserver.compiler.Task;
-import com.google.appinventor.buildserver.compiler.TaskResult;
+import com.google.appinventor.buildserver.compiler.*;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
-import com.google.common.io.Resources;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -14,17 +10,22 @@ import org.codehaus.jettison.json.JSONTokener;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.Set;
 
+
+/**
+ * prepareCompTypes(compTypes);
+ * readBuildInfo();
+ */
+@BuildType(apk = true, aab = true)
 public class ReadBuildInfo implements Task {
   private final String TASK_NAME = "ReadBuildInfo";
 
   @Override
   public TaskResult execute(ExecutorContext context) {
     try {
-      JSONArray buildInfo = new JSONArray(ExecutorResources.getCompBuildInfo());
+      JSONArray buildInfo = new JSONArray(context.getResources().getCompBuildInfo());
 
       Set<String> allSimpleTypes = Sets.newHashSet();
       for (int i = 0; i < buildInfo.length(); ++i) {
@@ -40,41 +41,43 @@ public class ReadBuildInfo implements Task {
       extCompTypes.removeAll(allSimpleTypes);
       context.setExtCompTypes(extCompTypes);
     } catch (JSONException e) {
+      e.printStackTrace();
       return TaskResult.generateError(e);
     }
 
     try {
-      JSONArray simpleCompsBuildInfo = new JSONArray(ExecutorResources.getCompBuildInfo());
+      JSONArray simpleCompsBuildInfo = new JSONArray(context.getResources().getCompBuildInfo());
+      context.setSimpleCompsBuildInfo(simpleCompsBuildInfo);
 
       JSONArray extCompsBuildInfo = new JSONArray();
       Set<String> readComponentInfos = new HashSet<String>();
       for (String type : context.getExtCompTypes()) {
         // .../assets/external_comps/com.package.MyExtComp/files/component_build_info.json
-        File extCompRuntimeFileDir = new File(getExtCompDirPath(type) + ExecutorResources.getRuntimeFilesDir());
+        File extCompRuntimeFileDir = new File(ExecutorUtils.getExtCompDirPath(type, context.getProject(), context.getExtTypePathCache())
+            + context.getResources().getRuntimeFilesDir());
         if (!extCompRuntimeFileDir.exists()) {
           // try extension package name for multi-extension files
-          String path = getExtCompDirPath(type);
+          String path = ExecutorUtils.getExtCompDirPath(type, context.getProject(), context.getExtTypePathCache());
           path = path.substring(0, path.lastIndexOf('.'));
-          extCompRuntimeFileDir = new File(path + ExecutorResources.getRuntimeFilesDir());
+          extCompRuntimeFileDir = new File(path + context.getResources().getRuntimeFilesDir());
         }
         File jsonFile = new File(extCompRuntimeFileDir, "component_build_infos.json");
         if (!jsonFile.exists()) {
           // old extension with a single component?
           jsonFile = new File(extCompRuntimeFileDir, "component_build_info.json");
           if (!jsonFile.exists()) {
-            throw new IllegalStateException("No component_build_info.json in extension for " +
-                type);
+            throw new IllegalStateException("No component_build_info.json in extension for " + type);
           }
         }
         if (readComponentInfos.contains(jsonFile.getAbsolutePath())) {
           continue;  // already read the build infos for this type (bundle extension)
         }
 
-        String buildInfo = Resources.toString(jsonFile.toURI().toURL(), Charsets.UTF_8);
+        String buildInfo = com.google.common.io.Resources.toString(jsonFile.toURI().toURL(), Charsets.UTF_8);
         JSONTokener tokener = new JSONTokener(buildInfo);
         Object value = tokener.nextValue();
         if (value instanceof JSONObject) {
-          extCompsBuildInfo.put((JSONObject) value);
+          extCompsBuildInfo.put(value);
           readComponentInfos.add(jsonFile.getAbsolutePath());
         } else if (value instanceof JSONArray) {
           JSONArray infos = (JSONArray) value;
@@ -84,6 +87,7 @@ public class ReadBuildInfo implements Task {
           readComponentInfos.add(jsonFile.getAbsolutePath());
         }
       }
+      context.setExtCompsBuildInfo(extCompsBuildInfo);
     } catch (JSONException | IOException e) {
       return TaskResult.generateError(e);
     }

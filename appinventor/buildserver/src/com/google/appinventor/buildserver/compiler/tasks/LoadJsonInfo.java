@@ -1,157 +1,214 @@
 package com.google.appinventor.buildserver.compiler.tasks;
 
 import com.google.appinventor.buildserver.compiler.ExecutorContext;
+import com.google.appinventor.buildserver.compiler.ExecutorUtils;
 import com.google.appinventor.buildserver.compiler.Task;
 import com.google.appinventor.buildserver.compiler.TaskResult;
 import com.google.appinventor.components.common.ComponentDescriptorConstants;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
 
+
+/**
+ * compiler.generateAssets();
+ * compiler.generateActivities();
+ * compiler.generateBroadcastReceivers();
+ * compiler.generateLibNames();
+ * compiler.generateNativeLibNames();
+ * compiler.generatePermissions();
+ * compiler.generateMinSdks();
+ * compiler.generateBroadcastReceiver();
+ */
 public class LoadJsonInfo implements Task {
   private String TASK_NAME = "LoadJsonInfo";
 
+  ExecutorContext context = null;
+  private ConcurrentMap<String, Map<String, Map<String, Set<String>>>> conditionals;
+
   @Override
   public TaskResult execute(ExecutorContext context) {
-    this.generateAssets();
-    this.generateActivities();
-    this.generateBroadcastReceivers();
-    this.generateLibNames();
-    this.generateNativeLibNames();
-    this.generatePermissions();
-    this.generateMinSdks();
+    this.context = context;
+    this.conditionals = new ConcurrentHashMap<>();
+
+    if (!this.generateAssets() || !this.generateActivities() || !this.generateBroadcastReceivers() ||
+        !this.generateLibNames() || !this.generateNativeLibNames() || !this.generatePermissions() ||
+        !this.generateMinSdks()) {
+      return TaskResult.generateError("Could not extract info from the app");
+    }
 
     // TODO(Will): Remove the following call once the deprecated
     //             @SimpleBroadcastReceiver annotation is removed. It should
     //             should remain for the time being because otherwise we'll break
     //             extensions currently using @SimpleBroadcastReceiver.
-    this.generateBroadcastReceiver();
-    return null;
-  }
-
-  /*
-   * Generate the set of Android libraries needed by this project.
-   */
-  void generateLibNames() {
-    try {
-      loadJsonInfo(libsNeeded, ComponentDescriptorConstants.LIBRARIES_TARGET);
-    } catch (IOException e) {
-      // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Libraries"));
-    } catch (JSONException e) {
-      // This is fatal, but shouldn't actually ever happen.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Libraries"));
+    if (!this.generateBroadcastReceiver()) {
+      return TaskResult.generateError("Could not generate the broadcast receiver");
     }
 
-    int n = 0;
-    for (String type : libsNeeded.keySet()) {
-      n += libsNeeded.get(type).size();
-    }
-
-    System.out.println("Libraries needed, n = " + n);
-  }
-
-  /*
-   * Generate the set of conditionally included libraries needed by this project.
-   */
-  void generateNativeLibNames() {
-    if (isForEmulator) {  // no libraries for emulator
-      return;
-    }
-    try {
-      loadJsonInfo(nativeLibsNeeded, ComponentDescriptorConstants.NATIVE_TARGET);
-    } catch (IOException e) {
-      // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Native Libraries"));
-    } catch (JSONException e) {
-      // This is fatal, but shouldn't actually ever happen.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Native Libraries"));
-    }
-
-    int n = 0;
-    for (String type : nativeLibsNeeded.keySet()) {
-      n += nativeLibsNeeded.get(type).size();
-    }
-
-    System.out.println("Native Libraries needed, n = " + n);
+    return TaskResult.generateSuccess();
   }
 
   /*
    * Generate the set of conditionally included assets needed by this project.
    */
-  void generateAssets() {
+  private boolean generateAssets() {
+    context.getReporter().info("Generating assets...");
     try {
-      loadJsonInfo(assetsNeeded, ComponentDescriptorConstants.ASSETS_TARGET);
-    } catch (IOException e) {
+      loadJsonInfo(context.getJsonInfo().getAssetsNeeded(), ComponentDescriptorConstants.ASSETS_TARGET);
+    } catch (IOException | JSONException e) {
       // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Assets"));
-    } catch (JSONException e) {
-      // This is fatal, but shouldn't actually ever happen.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Assets"));
+      context.getReporter().error("There was an error in the Assets stage", true);
+      return false;
     }
 
     int n = 0;
-    for (String type : assetsNeeded.keySet()) {
-      n += assetsNeeded.get(type).size();
+    for (String type : context.getJsonInfo().getAssetsNeeded().keySet()) {
+      n += context.getJsonInfo().getAssetsNeeded().get(type).size();
     }
 
-    System.out.println("Component assets needed, n = " + n);
+    context.getReporter().log("Component assets needed, n = " + n);
+    return true;
   }
 
   /*
    * Generate the set of conditionally included activities needed by this project.
    */
-  void generateActivities() {
+  private boolean generateActivities() {
+    context.getReporter().info("Generating activities...");
     try {
-      loadJsonInfo(activitiesNeeded, ComponentDescriptorConstants.ACTIVITIES_TARGET);
-    } catch (IOException e) {
+      loadJsonInfo(context.getJsonInfo().getActivitiesNeeded(), ComponentDescriptorConstants.ACTIVITIES_TARGET);
+    } catch (IOException | JSONException e) {
       // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Activities"));
-    } catch (JSONException e) {
-      // This is fatal, but shouldn't actually ever happen.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Activities"));
+      context.getReporter().error("There was an error in the Activities stage", true);
+      return false;
     }
 
     int n = 0;
-    for (String type : activitiesNeeded.keySet()) {
-      n += activitiesNeeded.get(type).size();
+    for (String type : context.getJsonInfo().getActivitiesNeeded().keySet()) {
+      n += context.getJsonInfo().getActivitiesNeeded().get(type).size();
     }
 
-    System.out.println("Component activities needed, n = " + n);
+    context.getReporter().log("Component activities needed, n = " + n);
+    return true;
   }
 
   /*
    * Generate a set of conditionally included broadcast receivers needed by this project.
    */
-  void generateBroadcastReceivers() {
+  private boolean generateBroadcastReceivers() {
+    context.getReporter().info("Generating broadcast receivers...");
     try {
-      loadJsonInfo(broadcastReceiversNeeded, ComponentDescriptorConstants.BROADCAST_RECEIVERS_TARGET);
-    }
-    catch (IOException e) {
+      loadJsonInfo(context.getJsonInfo().getBroadcastReceiversNeeded(), ComponentDescriptorConstants.BROADCAST_RECEIVERS_TARGET);
+    } catch (IOException | JSONException e) {
       // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "BroadcastReceivers"));
-    } catch (JSONException e) {
-      // This is fatal, but shouldn't actually ever happen.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "BroadcastReceivers"));
+      context.getReporter().error("There was an error in the BroadcastReceivers stage", true);
+      return false;
     }
 
-    mergeConditionals(conditionals.get(ComponentDescriptorConstants.BROADCAST_RECEIVERS_TARGET), broadcastReceiversNeeded);
+    mergeConditionals(conditionals.get(ComponentDescriptorConstants.BROADCAST_RECEIVERS_TARGET), context.getJsonInfo().getBroadcastReceiversNeeded());
+
+    // TODO: Output the number of broadcast receivers
+
+    return true;
+  }
+
+  /*
+   * Generate the set of Android libraries needed by this project.
+   */
+  private boolean generateLibNames() {
+    context.getReporter().info("Generating libraries...");
+    try {
+      loadJsonInfo(context.getJsonInfo().getLibsNeeded(), ComponentDescriptorConstants.LIBRARIES_TARGET);
+    } catch (IOException | JSONException e) {
+      // This is fatal.
+      context.getReporter().error("There was an error in the Libraries stage", true);
+      return false;
+    }
+
+    int n = 0;
+    for (String type : context.getJsonInfo().getLibsNeeded().keySet()) {
+      n += context.getJsonInfo().getLibsNeeded().get(type).size();
+    }
+
+    context.getReporter().log("Libraries needed, n = " + n);
+    return true;
+  }
+
+  /*
+   * Generate the set of conditionally included libraries needed by this project.
+   */
+  private boolean generateNativeLibNames() {
+    context.getReporter().info("Generating native libraries...");
+    if (context.isForEmulator()) {  // no libraries for emulator, so we return success
+      return true;
+    }
+    try {
+      loadJsonInfo(context.getJsonInfo().getNativeLibsNeeded(), ComponentDescriptorConstants.NATIVE_TARGET);
+    } catch (IOException | JSONException e) {
+      // This is fatal.
+      context.getReporter().error("There was an error in the Native Libraries stage", true);
+      return false;
+    }
+
+    int n = 0;
+    for (String type : context.getJsonInfo().getNativeLibsNeeded().keySet()) {
+      n += context.getJsonInfo().getNativeLibsNeeded().get(type).size();
+    }
+
+    context.getReporter().log("Native Libraries needed, n = " + n);
+    return true;
+  }
+
+  private boolean generatePermissions() {
+    context.getReporter().info("Generating permissions...");
+    try {
+      loadJsonInfo(context.getJsonInfo().getPermissionsNeeded(), ComponentDescriptorConstants.PERMISSIONS_TARGET);
+      if (context.getProject() != null) {    // Only do this if we have a project (testing doesn't provide one :-( ).
+        context.getReporter().log("usesLocation = " + context.getProject().getUsesLocation());
+        if (context.getProject().getUsesLocation().equals("True")) { // Add location permissions if any WebViewer requests it
+          Set<String> locationPermissions = Sets.newHashSet(); // via a Property.
+          // See ProjectEditor.recordLocationSettings()
+          locationPermissions.add("android.permission.ACCESS_FINE_LOCATION");
+          locationPermissions.add("android.permission.ACCESS_COARSE_LOCATION");
+          locationPermissions.add("android.permission.ACCESS_MOCK_LOCATION");
+          context.getJsonInfo().getPermissionsNeeded().put("com.google.appinventor.components.runtime.WebViewer", locationPermissions);
+        }
+      }
+    } catch (IOException | JSONException e) {
+      // This is fatal.
+      context.getReporter().error("There was an error in the Permissions stage", true);
+      return false;
+    }
+
+    mergeConditionals(conditionals.get(ComponentDescriptorConstants.PERMISSIONS_TARGET), context.getJsonInfo().getPermissionsNeeded());
+
+    int n = 0;
+    for (String type : context.getJsonInfo().getPermissionsNeeded().keySet()) {
+      n += context.getJsonInfo().getPermissionsNeeded().get(type).size();
+    }
+
+    context.getReporter().log("Permissions needed, n = " + n);
+    return true;
+  }
+
+  private boolean generateMinSdks() {
+    context.getReporter().info("Generating Android minimum SDK...");
+    try {
+      loadJsonInfo(context.getJsonInfo().getMinSdksNeeded(), ComponentDescriptorConstants.ANDROIDMINSDK_TARGET);
+    } catch (IOException | JSONException e) {
+      // This is fatal.
+      context.getReporter().error("There was an error in the Android Min SDK stage", true);
+      return false;
+    }
+
+    return true;
   }
 
   /*
@@ -160,75 +217,27 @@ public class LoadJsonInfo implements Task {
    *             that we don't break extensions currently using the
    *             @SimpleBroadcastReceiver annotation.
    */
-  void generateBroadcastReceiver() {
+  private boolean generateBroadcastReceiver() {
+    context.getReporter().info("Generating component broadcast receivers...");
     try {
-      loadJsonInfo(componentBroadcastReceiver, ComponentDescriptorConstants.BROADCAST_RECEIVER_TARGET);
-    }
-    catch (IOException e) {
+      loadJsonInfo(context.getJsonInfo().getComponentBroadcastReceiver(), ComponentDescriptorConstants.BROADCAST_RECEIVER_TARGET);
+    } catch (IOException | JSONException e) {
       // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "BroadcastReceiver"));
-    } catch (JSONException e) {
-      // This is fatal, but shouldn't actually ever happen.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "BroadcastReceiver"));
+      context.getReporter().error("There was an error in the BroadcastReceiver Generator stage", true);
+      return false;
     }
+    return true;
   }
 
-  private void generateMinSdks() {
-    try {
-      loadJsonInfo(minSdksNeeded, ComponentDescriptorConstants.ANDROIDMINSDK_TARGET);
-    } catch (IOException|JSONException e) {
-      // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "AndroidMinSDK"));
-    }
-  }
-
-  void generatePermissions() {
-    try {
-      loadJsonInfo(permissionsNeeded, ComponentDescriptorConstants.PERMISSIONS_TARGET);
-      if (project != null) {    // Only do this if we have a project (testing doesn't provide one :-( ).
-        LOG.log(Level.INFO, "usesLocation = " + project.getUsesLocation());
-        if (project.getUsesLocation().equals("True")) { // Add location permissions if any WebViewer requests it
-          Set<String> locationPermissions = Sets.newHashSet(); // via a Property.
-          // See ProjectEditor.recordLocationSettings()
-          locationPermissions.add("android.permission.ACCESS_FINE_LOCATION");
-          locationPermissions.add("android.permission.ACCESS_COARSE_LOCATION");
-          locationPermissions.add("android.permission.ACCESS_MOCK_LOCATION");
-          permissionsNeeded.put("com.google.appinventor.components.runtime.WebViewer", locationPermissions);
-        }
-      }
-    } catch (IOException e) {
-      // This is fatal.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Permissions"));
-    } catch (JSONException e) {
-      // This is fatal, but shouldn't actually ever happen.
-      e.printStackTrace();
-      userErrors.print(String.format(ERROR_IN_STAGE, "Permissions"));
-    }
-
-    mergeConditionals(conditionals.get(ComponentDescriptorConstants.PERMISSIONS_TARGET), permissionsNeeded);
-
-    int n = 0;
-    for (String type : permissionsNeeded.keySet()) {
-      n += permissionsNeeded.get(type).size();
-    }
-
-    System.out.println("Permissions needed, n = " + n);
-  }
-
-  private void loadJsonInfo(ConcurrentMap<String, Set<String>> infoMap, String targetInfo)
-      throws IOException, JSONException {
+  private void loadJsonInfo(ConcurrentMap<String, Set<String>> infoMap, String targetInfo) throws IOException, JSONException {
     synchronized (infoMap) {
       if (!infoMap.isEmpty()) {
         return;
       }
 
       JSONArray buildInfo = new JSONArray(
-          "[" + simpleCompsBuildInfo.join(",") + "," +
-              extCompsBuildInfo.join(",") + "]");
+          "[" + context.getSimpleCompsBuildInfo().join(",") + "," +
+              context.getExtCompsBuildInfo().join(",") + "]");
 
       for (int i = 0; i < buildInfo.length(); ++i) {
         JSONObject compJson = buildInfo.getJSONObject(i);
@@ -241,17 +250,17 @@ public class LoadJsonInfo implements Task {
           // defined. Rather then require them all to be recompiled, we
           // treat the missing attribute as empty.
           if (e.getMessage().contains("broadcastReceiver")) {
-            LOG.log(Level.INFO, "Component \"" + type + "\" does not have a broadcast receiver.");
+            context.getReporter().warn("Component \"" + type + "\" does not have a broadcast receiver.");
             continue;
           } else if (e.getMessage().contains(ComponentDescriptorConstants.ANDROIDMINSDK_TARGET)) {
-            LOG.log(Level.INFO, "Component \"" + type + "\" does not specify a minimum SDK.");
+            context.getReporter().warn("Component \"" + type + "\" does not specify a minimum SDK.");
             continue;
           } else {
             throw e;
           }
         }
 
-        if (!simpleCompTypes.contains(type) && !extCompTypes.contains(type)) {
+        if (!context.getSimpleCompTypes().contains(type) && !context.getExtCompTypes().contains(type)) {
           continue;
         }
 
@@ -268,6 +277,77 @@ public class LoadJsonInfo implements Task {
         }
 
         processConditionalInfo(compJson, type, targetInfo);
+      }
+    }
+  }
+
+  /**
+   * Processes the conditional info from simple_components_build_info.json into
+   * a structure mapping annotation types to component names to block names to
+   * values.
+   *
+   * @param compJson   Parsed component data from JSON
+   * @param type       The name of the type being processed
+   * @param targetInfo Name of the annotation target being processed (e.g.,
+   *                   permissions). Any of: PERMISSIONS_TARGET,
+   *                   BROADCAST_RECEIVERS_TARGET
+   */
+  private void processConditionalInfo(JSONObject compJson, String type, String targetInfo) {
+    // Strip off the package name since SCM and BKY use unqualified names
+    type = type.substring(type.lastIndexOf('.') + 1);
+
+    JSONObject conditionals = compJson.optJSONObject(ComponentDescriptorConstants.CONDITIONALS_TARGET);
+    if (conditionals != null) {
+      JSONObject jsonBlockMap = conditionals.optJSONObject(targetInfo);
+      if (jsonBlockMap != null) {
+        if (!this.conditionals.containsKey(targetInfo)) {
+          this.conditionals.put(targetInfo, new HashMap<String, Map<String, Set<String>>>());
+        }
+        Map<String, Set<String>> blockMap = new HashMap<>();
+        this.conditionals.get(targetInfo).put(type, blockMap);
+        for (String key : (List<String>) Lists.newArrayList(jsonBlockMap.keys())) {
+          JSONArray data = jsonBlockMap.optJSONArray(key);
+          HashSet<String> result = new HashSet<>();
+          for (int i = 0; i < data.length(); i++) {
+            result.add(data.optString(i));
+          }
+          blockMap.put(key, result);
+        }
+      }
+    }
+  }
+
+  private void mergeConditionals(Map<String, Map<String, Set<String>>> conditionalMap, Map<String, Set<String>> infoMap) {
+    if (conditionalMap != null) {
+      if (context.isForCompanion()) {
+        // For the companion, we take all of the conditionals
+        for (Map.Entry<String, Map<String, Set<String>>> entry : conditionalMap.entrySet()) {
+          for (Set<String> items : entry.getValue().values()) {
+            ExecutorUtils.setOrMerge(infoMap, entry.getKey(), items);
+          }
+        }
+        // If necessary, we can remove permissions at this point (e.g., Texting, PhoneCall)
+      } else {
+        // We walk the set of components and the blocks used in the project. If
+        // any <component, block> combination is in the set of conditionals,
+        // then we merge the associated set of values into the existing set. If
+        // no existing set exists, we create one.
+        for (Map.Entry<String, Set<String>> entry : context.getCompBlocks().entrySet()) {
+          if (conditionalMap.containsKey(entry.getKey())) {
+            Map<String, Set<String>> blockPermsMap = conditionalMap.get(entry.getKey());
+            for (String blockName : entry.getValue()) {
+              Set<String> blockPerms = blockPermsMap.get(blockName);
+              if (blockPerms != null) {
+                Set<String> typePerms = infoMap.get(entry.getKey());
+                if (typePerms != null) {
+                  typePerms.addAll(blockPerms);
+                } else {
+                  infoMap.put(entry.getKey(), new HashSet<>(blockPerms));
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

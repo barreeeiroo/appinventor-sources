@@ -1,7 +1,7 @@
 package com.google.appinventor.buildserver.compiler;
 
 import com.google.appinventor.buildserver.Project;
-import com.google.appinventor.buildserver.compiler.context.JsonInfo;
+import com.google.appinventor.buildserver.compiler.context.ComponentInfo;
 import com.google.appinventor.buildserver.compiler.context.Resources;
 import com.google.appinventor.buildserver.compiler.context.Paths;
 import org.codehaus.jettison.json.JSONArray;
@@ -33,7 +33,7 @@ public class ExecutorContext {
 
   private Paths paths;
   private Resources resources;
-  private JsonInfo jsonInfo;
+  private ComponentInfo componentInfo;
 
   public static class Builder {
     private final Project project;
@@ -148,7 +148,7 @@ public class ExecutorContext {
       context.paths.setLibsDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "libs"));
 
       context.resources = new Resources();
-      context.jsonInfo = new JsonInfo();
+      context.componentInfo = new ComponentInfo();
 
       context.extTypePathCache = new HashMap<>();
 
@@ -249,8 +249,8 @@ public class ExecutorContext {
     return resources.getResource(resource);
   }
 
-  public JsonInfo getJsonInfo() {
-    return this.jsonInfo;
+  public ComponentInfo getComponentInfo() {
+    return this.componentInfo;
   }
 
   public Resources getResources() {

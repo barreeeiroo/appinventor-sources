@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentMap;
 
 
 @BuildType(apk = true, aab = true)
-public class JsonInfo {
+public class ComponentInfo {
   private final ConcurrentMap<String, Set<String>> assetsNeeded;
   private final ConcurrentMap<String, Set<String>> activitiesNeeded;
   private final ConcurrentMap<String, Set<String>> broadcastReceiversNeeded;
@@ -21,7 +21,7 @@ public class JsonInfo {
 
   private Set<String> uniqueLibsNeeded;
 
-  public JsonInfo() {
+  public ComponentInfo() {
     assetsNeeded = new ConcurrentHashMap<>();
     activitiesNeeded = new ConcurrentHashMap<>();
     broadcastReceiversNeeded = new ConcurrentHashMap<>();

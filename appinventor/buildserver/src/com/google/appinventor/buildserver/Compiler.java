@@ -1301,8 +1301,7 @@ public final class Compiler {
     // Invoke aapt to package everything up
     out.println("________Invoking AAPT");
     File deployDir = createDir(buildDir, "deploy");
-    String tmpPackageName = deployDir.getAbsolutePath() + SLASH +
-        project.getProjectName() + "." + (isAab ? "apk" : "ap_");
+    String tmpPackageName = deployDir.getAbsolutePath() + SLASH + project.getProjectName() + "." + (isAab ? "apk" : "ap_");
     File srcJavaDir = createDir(buildDir, "generated/src");
     File rJavaDir = createDir(buildDir, "generated/symbols");
     if (isAab) {

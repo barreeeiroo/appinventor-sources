@@ -1,6 +1,7 @@
 package com.google.appinventor.buildserver.compiler.context;
 
 import com.google.appinventor.buildserver.compiler.BuildType;
+import com.google.appinventor.buildserver.util.AARLibraries;
 import com.google.common.collect.Sets;
 
 import java.util.Set;
@@ -20,6 +21,7 @@ public class ComponentInfo {
   private final ConcurrentMap<String, Set<String>> componentBroadcastReceiver;
 
   private Set<String> uniqueLibsNeeded;
+  private AARLibraries explodedAarLibs;
 
   public ComponentInfo() {
     assetsNeeded = new ConcurrentHashMap<>();
@@ -68,6 +70,14 @@ public class ComponentInfo {
 
   public void setUniqueLibsNeeded(Set<String> uniqueLibsNeeded) {
     this.uniqueLibsNeeded = uniqueLibsNeeded;
+  }
+
+  public AARLibraries getExplodedAarLibs() {
+    return explodedAarLibs;
+  }
+
+  public void setExplodedAarLibs(AARLibraries explodedAarLibs) {
+    this.explodedAarLibs = explodedAarLibs;
   }
 
   public ConcurrentMap<String, Set<String>> getComponentBroadcastReceiver() {

@@ -14,4 +14,10 @@ public class YoungAndroidValues {
   public static final String DEFAULT_VERSION_NAME = "1.0";
   public static final String DEFAULT_MIN_SDK = "7";
   public static final String DEFAULT_THEME = "AppTheme.Light.DarkActionBar";
+
+  public static final String LIBS_DIR_NAME = "libs";
+  public static final String ARMEABI_DIR_NAME = "armeabi";
+  public static final String ARMEABI_V7A_DIR_NAME = "armeabi-v7a";
+  public static final String ARM64_V8A_DIR_NAME = "arm64-v8a";
+  public static final String X86_64_DIR_NAME = "x86_64";
 }

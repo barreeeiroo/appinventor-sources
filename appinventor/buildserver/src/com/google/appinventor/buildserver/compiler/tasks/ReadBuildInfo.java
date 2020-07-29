@@ -1,5 +1,6 @@
 package com.google.appinventor.buildserver.compiler.tasks;
 
+import com.google.appinventor.buildserver.Compiler;
 import com.google.appinventor.buildserver.compiler.*;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
@@ -8,13 +9,18 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.codehaus.jettison.json.JSONTokener;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
 /**
+ * "static"
  * prepareCompTypes(compTypes);
  * readBuildInfo();
  */
@@ -24,6 +30,37 @@ public class ReadBuildInfo implements Task {
 
   @Override
   public TaskResult execute(ExecutorContext context) {
+    List<String> aars = new ArrayList<>();
+    List<String> jars = new ArrayList<>();
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(Executor.class.getResourceAsStream(context.getResources().getRuntimeFilesDir() + "aars.txt")))) {
+      String line;
+      while ((line = in.readLine()) != null) {
+        if (!line.isEmpty()) {
+          aars.add(line);
+        } else {
+          break;
+        }
+      }
+    } catch (IOException e) {
+      context.getReporter().error("Fatal error on startup reading aars.txt", true);
+      return TaskResult.generateError(e);
+    }
+    context.getResources().setSupportAars(aars.toArray(new String[0]));
+    try (BufferedReader in = new  BufferedReader(new InputStreamReader(Executor.class.getResourceAsStream(context.getResources().getRuntimeFilesDir() + "jars.txt")))) {
+      String line;
+      while ((line = in.readLine()) != null) {
+        if (!line.isEmpty()) {
+          jars.add(context.getResources().getRuntimeFilesDir() + line);
+        } else {
+          break;
+        }
+      }
+    } catch (IOException e) {
+      context.getReporter().error("Fatal error on startup reading jars.txt", true);
+      return TaskResult.generateError(e);
+    }
+    context.getResources().setSupportJars(jars.toArray(new String[0]));
+
     try {
       JSONArray buildInfo = new JSONArray(context.getResources().getCompBuildInfo());
 

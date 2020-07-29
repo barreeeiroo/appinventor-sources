@@ -6,6 +6,8 @@ import com.google.appinventor.buildserver.compiler.Executor;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,8 +15,12 @@ import java.util.concurrent.ConcurrentMap;
 
 public class Resources {
   private final ConcurrentMap<String, File> resources;
+  private String[] SUPPORT_JARS;
+  private String[] SUPPORT_AARS;
 
   public final static String RUNTIME_FILES_DIR = "/" + "files" + "/";
+
+  private static final String DEFAULT_ICON = RUNTIME_FILES_DIR + "ya.png";
 
   private final String COMP_BUILD_INFO = Resources.RUNTIME_FILES_DIR + "simple_components_build_info.json";
   private final String BUNDLETOOL_JAR = Resources.RUNTIME_FILES_DIR + "bundletool.jar";
@@ -62,6 +68,26 @@ public class Resources {
 
   public String getRuntimeFilesDir() {
     return Resources.RUNTIME_FILES_DIR;
+  }
+
+  public String[] getSupportJars() {
+    return SUPPORT_JARS;
+  }
+
+  public void setSupportJars(String[] supportJars) {
+    SUPPORT_JARS = supportJars;
+  }
+
+  public String[] getSupportAars() {
+    return SUPPORT_AARS;
+  }
+
+  public void setSupportAars(String[] supportAars) {
+    SUPPORT_AARS = supportAars;
+  }
+
+  public BufferedImage getDefaultIcon() throws IOException {
+    return ImageIO.read(Executor.class.getResource(Resources.DEFAULT_ICON));
   }
 
   public String getCompBuildInfo() {

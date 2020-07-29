@@ -11,6 +11,7 @@ public class Paths {
   private File drawableDir;
   private File tmpDir;
   private File libsDir;
+  private File manifest;
 
   public Paths(String outputFileName) {
     this.outputFileName = outputFileName;
@@ -68,6 +69,14 @@ public class Paths {
     this.libsDir = libsDir;
   }
 
+  public File getManifest() {
+    return manifest;
+  }
+
+  public void setManifest(File manifest) {
+    this.manifest = manifest;
+  }
+
   @Override
   public String toString() {
     return "Paths{" +
@@ -78,6 +87,7 @@ public class Paths {
         ", drawableDir=" + drawableDir +
         ", tmpDir=" + tmpDir +
         ", libsDir=" + libsDir +
+        ", manifest=" + manifest +
         '}';
   }
 }

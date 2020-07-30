@@ -26,8 +26,6 @@ import java.util.Set;
  */
 @BuildType(apk = true, aab = true)
 public class ReadBuildInfo implements Task {
-  private final String TASK_NAME = "ReadBuildInfo";
-
   @Override
   public TaskResult execute(ExecutorContext context) {
     List<String> aars = new ArrayList<>();
@@ -129,10 +127,5 @@ public class ReadBuildInfo implements Task {
       return TaskResult.generateError(e);
     }
     return TaskResult.generateSuccess();
-  }
-
-  @Override
-  public String getName() {
-    return this.TASK_NAME;
   }
 }

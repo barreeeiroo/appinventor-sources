@@ -18,12 +18,15 @@ public class Resources {
   private String[] SUPPORT_JARS;
   private String[] SUPPORT_AARS;
 
-  public final static String RUNTIME_FILES_DIR = "/" + "files" + "/";
+  private File appRTxt;
+
+  public static final String RUNTIME_FILES_DIR = "/" + "files" + "/";
+  private static final String ANDROID_RUNTIME = RUNTIME_FILES_DIR + "android.jar";
 
   private static final String DEFAULT_ICON = RUNTIME_FILES_DIR + "ya.png";
 
-  private final String COMP_BUILD_INFO = Resources.RUNTIME_FILES_DIR + "simple_components_build_info.json";
-  private final String BUNDLETOOL_JAR = Resources.RUNTIME_FILES_DIR + "bundletool.jar";
+  private static final String COMP_BUILD_INFO = Resources.RUNTIME_FILES_DIR + "simple_components_build_info.json";
+  private static final String BUNDLETOOL_JAR = Resources.RUNTIME_FILES_DIR + "bundletool.jar";
 
   public Resources() {
     resources = new ConcurrentHashMap<>();
@@ -70,6 +73,10 @@ public class Resources {
     return Resources.RUNTIME_FILES_DIR;
   }
 
+  public String getAndroidRuntime() {
+    return getResource(Resources.ANDROID_RUNTIME);
+  }
+
   public String[] getSupportJars() {
     return SUPPORT_JARS;
   }
@@ -86,6 +93,14 @@ public class Resources {
     SUPPORT_AARS = supportAars;
   }
 
+  public File getAppRTxt() {
+    return appRTxt;
+  }
+
+  public void setAppRTxt(File appRTxt) {
+    this.appRTxt = appRTxt;
+  }
+
   public BufferedImage getDefaultIcon() throws IOException {
     return ImageIO.read(Executor.class.getResource(Resources.DEFAULT_ICON));
   }
@@ -96,6 +111,23 @@ public class Resources {
     } catch (IOException e) {
       return null;
     }
+  }
+
+  public String aapt() {
+    String osName = System.getProperty("os.name");
+    String aaptTool;
+    if (osName.equals("Mac OS X")) {
+      aaptTool = "/tools/mac/aapt";
+    } else if (osName.equals("Linux")) {
+      aaptTool = "/tools/linux/aapt";
+    } else if (osName.startsWith("Windows")) {
+      aaptTool = "/tools/windows/aapt";
+    } else {
+      aaptTool = null;
+    }
+    if (aaptTool != null)
+      return getResource(aaptTool);
+    return null;
   }
 
   public String jarsigner() {

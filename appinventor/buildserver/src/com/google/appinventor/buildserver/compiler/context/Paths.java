@@ -7,11 +7,17 @@ public class Paths {
 
   private File buildDir;
   private File deployDir;
+
   private File resDir;
   private File drawableDir;
   private File tmpDir;
   private File libsDir;
+  private File assetsDir;
+
   private File manifest;
+
+  private File mergedResDir;
+  private File tmpPackageName;
 
   public Paths(String outputFileName) {
     this.outputFileName = outputFileName;
@@ -69,12 +75,36 @@ public class Paths {
     this.libsDir = libsDir;
   }
 
+  public File getAssetsDir() {
+    return assetsDir;
+  }
+
+  public void setAssetsDir(File assetsDir) {
+    this.assetsDir = assetsDir;
+  }
+
   public File getManifest() {
     return manifest;
   }
 
   public void setManifest(File manifest) {
     this.manifest = manifest;
+  }
+
+  public File getMergedResDir() {
+    return mergedResDir;
+  }
+
+  public void setMergedResDir(File mergedResDir) {
+    this.mergedResDir = mergedResDir;
+  }
+
+  public File getTmpPackageName() {
+    return tmpPackageName;
+  }
+
+  public void setTmpPackageName(File tmpPackageName) {
+    this.tmpPackageName = tmpPackageName;
   }
 
   @Override
@@ -87,7 +117,10 @@ public class Paths {
         ", drawableDir=" + drawableDir +
         ", tmpDir=" + tmpDir +
         ", libsDir=" + libsDir +
+        ", assetsDir=" + assetsDir +
         ", manifest=" + manifest +
+        ", mergedResDir=" + mergedResDir +
+        ", tmpPackageName=" + tmpPackageName +
         '}';
   }
 }

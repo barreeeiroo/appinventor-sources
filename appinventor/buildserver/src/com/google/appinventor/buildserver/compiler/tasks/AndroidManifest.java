@@ -2,10 +2,7 @@ package com.google.appinventor.buildserver.compiler.tasks;
 
 import com.google.appinventor.buildserver.Project;
 import com.google.appinventor.buildserver.Signatures;
-import com.google.appinventor.buildserver.compiler.ExecutorContext;
-import com.google.appinventor.buildserver.compiler.Task;
-import com.google.appinventor.buildserver.compiler.TaskResult;
-import com.google.appinventor.buildserver.compiler.YoungAndroidValues;
+import com.google.appinventor.buildserver.compiler.*;
 import com.google.appinventor.components.common.YaVersion;
 import com.google.common.collect.Sets;
 
@@ -18,10 +15,8 @@ import java.util.Set;
 /**
  * compiler.writeAndroidManifest()
  */
+@BuildType(apk = true, aab = true)
 public class AndroidManifest implements Task {
-  private final String TASK_NAME = "AndroidManifest";
-
-
   @Override
   public TaskResult execute(ExecutorContext context) {
     context.getPaths().setManifest(new File(context.getPaths().getBuildDir(), "AndroidManifest.xml"));
@@ -308,10 +303,5 @@ public class AndroidManifest implements Task {
 
   private String cleanName(String name) {
     return name.replace("&", "and");
-  }
-
-  @Override
-  public String getName() {
-    return TASK_NAME;
   }
 }

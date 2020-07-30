@@ -7,11 +7,4 @@ public interface Task {
    * @return TaskResult
    */
   TaskResult execute(ExecutorContext context);
-
-  /**
-   * Identify the task with a name
-   *
-   * @return String
-   */
-  String getName();
 }

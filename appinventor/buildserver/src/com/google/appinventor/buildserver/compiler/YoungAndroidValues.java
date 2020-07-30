@@ -9,7 +9,6 @@ public class YoungAndroidValues {
   public static final String EXT_COMPS_DIR_NAME = "external_comps";
 
   public static final String DEFAULT_APP_NAME = "";
-  public static final String DEFAULT_ICON = Resources.RUNTIME_FILES_DIR + "ya.png";
   public static final String DEFAULT_VERSION_CODE = "1";
   public static final String DEFAULT_VERSION_NAME = "1.0";
   public static final String DEFAULT_MIN_SDK = "7";

@@ -6,6 +6,7 @@
 
 package com.google.appinventor.buildserver;
 
+import com.google.appinventor.buildserver.compiler.BuildType;
 import com.google.appinventor.buildserver.compiler.Executor;
 import com.google.appinventor.buildserver.compiler.ExecutorContext;
 import com.google.appinventor.buildserver.compiler.Reporter;
@@ -176,13 +177,34 @@ public final class ProjectBuilder {
             .withType(ext)
             .build();
 
-        compiler.add(ReadBuildInfo.class);
-        compiler.add(LoadComponentInfo.class);
-        compiler.add(PrepareApplicationIcon.class);
-        compiler.add(XmlConfig.class);
-        compiler.add(AndroidManifest.class);
-        compiler.add(RawFiles.class);
-        compiler.add(Bundletool.class);
+        switch (ext) {
+          case BuildType.AAB_EXTENSION:
+            compiler.add(ReadBuildInfo.class);
+            compiler.add(LoadComponentInfo.class);
+            compiler.add(PrepareApplicationIcon.class);
+            compiler.add(XmlConfig.class);
+            compiler.add(AndroidManifest.class);
+            compiler.add(RawFiles.class);
+            compiler.add(MergeResources.class);
+            compiler.add(LibsSetup.class);
+            compiler.add(Aapt2.class);
+            compiler.add(Bundletool.class);
+            break;
+
+          case BuildType.APK_EXTENSION:
+          default:
+            compiler.add(ReadBuildInfo.class);
+            compiler.add(LoadComponentInfo.class);
+            compiler.add(PrepareApplicationIcon.class);
+            compiler.add(XmlConfig.class);
+            compiler.add(AndroidManifest.class);
+            compiler.add(RawFiles.class);
+            compiler.add(MergeResources.class);
+            compiler.add(LibsSetup.class);
+            compiler.add(Aapt.class);
+            break;
+        }
+
         Future<Boolean> executor = Executors.newSingleThreadExecutor().submit(compiler);
 
         /* boolean success =

@@ -1,10 +1,7 @@
 package com.google.appinventor.buildserver.compiler.tasks;
 
 import com.google.appinventor.buildserver.AnimationXmlConstants;
-import com.google.appinventor.buildserver.compiler.ExecutorContext;
-import com.google.appinventor.buildserver.compiler.ExecutorUtils;
-import com.google.appinventor.buildserver.compiler.Task;
-import com.google.appinventor.buildserver.compiler.TaskResult;
+import com.google.appinventor.buildserver.compiler.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -23,11 +20,9 @@ import java.util.Map;
  * compiler.writeICLauncherBackground()
  *
  */
+@BuildType(apk = true, aab = true)
 public class XmlConfig implements Task {
-  private final String TASK_NAME = "XmlConfig";
-
   ExecutorContext context;
-
 
   @Override
   public TaskResult execute(ExecutorContext context) {
@@ -381,10 +376,5 @@ public class XmlConfig implements Task {
       return false;
     }
     return true;
-  }
-
-  @Override
-  public String getName() {
-    return TASK_NAME;
   }
 }

@@ -19,11 +19,9 @@ import java.util.Set;
  * compiler.attachAarLibraries()
  * compiler.attachCompAssets()
  */
+@BuildType(apk = true, aab = true)
 public class RawFiles implements Task {
-  private final String TASK_NAME = "RawFiles";
-
   ExecutorContext context;
-
 
   @Override
   public TaskResult execute(ExecutorContext context) {
@@ -198,10 +196,5 @@ public class RawFiles implements Task {
       context.getReporter().error("There was an unknown error while processing assets", true);
       return false;
     }
-  }
-
-  @Override
-  public String getName() {
-    return TASK_NAME;
   }
 }

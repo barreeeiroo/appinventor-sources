@@ -1,9 +1,6 @@
 package com.google.appinventor.buildserver.compiler.tasks;
 
-import com.google.appinventor.buildserver.compiler.ExecutorContext;
-import com.google.appinventor.buildserver.compiler.ExecutorUtils;
-import com.google.appinventor.buildserver.compiler.Task;
-import com.google.appinventor.buildserver.compiler.TaskResult;
+import com.google.appinventor.buildserver.compiler.*;
 import com.google.common.base.Strings;
 
 import javax.imageio.ImageIO;
@@ -19,9 +16,8 @@ import java.util.List;
 /**
  * compiler.prepareApplicationIcon()
  */
+@BuildType(apk = true, aab = true)
 public class PrepareApplicationIcon implements Task {
-  private final String TASK_NAME = "PrepareAppIcon";
-
   @Override
   public TaskResult execute(ExecutorContext context) {
     // Create mipmap directories
@@ -169,10 +165,5 @@ public class PrepareApplicationIcon implements Task {
     Graphics2D g2 = finalResized.createGraphics();
     g2.drawImage(tmp, 0, 0, null);
     return finalResized;
-  }
-
-  @Override
-  public String getName() {
-    return TASK_NAME;
   }
 }

@@ -68,7 +68,7 @@ public class Executor implements Callable<Boolean> {
 
     for (int i = 0; i < TASKS_SIZE; i++) {
       Class<? extends Task> task = this.tasks.get(i);
-      String taskName = task.getName();
+      String taskName = task.getSimpleName();
 
       Object taskObject;
       try {
@@ -77,14 +77,6 @@ public class Executor implements Callable<Boolean> {
         e.printStackTrace();
         context.getReporter().error("Could create new task " + taskName);
         return false;
-      }
-
-      try {
-        Method getName = task.getMethod("getName");
-        taskName = (String) getName.invoke(taskObject);
-      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-        e.printStackTrace();
-        context.getReporter().warn("Could not check real name for task " + taskName);
       }
 
       if (task.isAnnotationPresent(BuildType.class)) {

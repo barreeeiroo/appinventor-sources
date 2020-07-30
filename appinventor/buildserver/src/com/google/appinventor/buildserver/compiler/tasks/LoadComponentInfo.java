@@ -1,9 +1,6 @@
 package com.google.appinventor.buildserver.compiler.tasks;
 
-import com.google.appinventor.buildserver.compiler.ExecutorContext;
-import com.google.appinventor.buildserver.compiler.ExecutorUtils;
-import com.google.appinventor.buildserver.compiler.Task;
-import com.google.appinventor.buildserver.compiler.TaskResult;
+import com.google.appinventor.buildserver.compiler.*;
 import com.google.appinventor.components.common.ComponentDescriptorConstants;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -27,9 +24,8 @@ import java.util.concurrent.ConcurrentMap;
  * compiler.generateMinSdks();
  * compiler.generateBroadcastReceiver();
  */
+@BuildType(apk = true, aab = true)
 public class LoadComponentInfo implements Task {
-  private String TASK_NAME = "LoadJsonInfo";
-
   ExecutorContext context = null;
   private ConcurrentMap<String, Map<String, Map<String, Set<String>>>> conditionals;
 
@@ -350,10 +346,5 @@ public class LoadComponentInfo implements Task {
         }
       }
     }
-  }
-
-  @Override
-  public String getName() {
-    return this.TASK_NAME;
   }
 }

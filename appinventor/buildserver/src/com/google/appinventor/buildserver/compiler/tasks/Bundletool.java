@@ -2,7 +2,6 @@ package com.google.appinventor.buildserver.compiler.tasks;
 
 import com.google.appinventor.buildserver.Execution;
 import com.google.appinventor.buildserver.compiler.*;
-import com.google.appinventor.buildserver.compiler.context.Resources;
 import com.google.common.io.Files;
 
 import java.io.File;
@@ -18,7 +17,6 @@ import java.util.zip.ZipOutputStream;
 
 @BuildType(aab = true)
 public class Bundletool implements Task {
-  private final String TASK_NAME = "Bundletool";
   private AabPaths aab;
 
   @Override
@@ -46,11 +44,6 @@ public class Bundletool implements Task {
       return TaskResult.generateError("Could not sign bundle");
     }
     return TaskResult.generateSuccess();
-  }
-
-  @Override
-  public String getName() {
-    return TASK_NAME;
   }
 
   private boolean createStructure(ExecutorContext context) {

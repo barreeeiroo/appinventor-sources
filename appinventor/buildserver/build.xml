@@ -119,7 +119,6 @@
       <fileset dir="${lib.dir}" includes="commons-io/commons-io-2.0.1.jar"/>
       <fileset dir="${lib.dir}" includes="args4j/args4j-2.0.18.jar"/>
       <fileset dir="${lib.dir}" includes="json/json.jar" />
-      <fileset dir="${lib.dir}" includes="immutables/value-2.8.2.jar" />
     </copy>
   </target>
 

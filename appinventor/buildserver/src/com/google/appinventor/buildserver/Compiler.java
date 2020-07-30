@@ -2175,6 +2175,8 @@ public final class Compiler {
       userErrors.print(String.format(ERROR_IN_STAGE, "AAPT"));
       return false;
     }
+    
+    libSetup();                 // Setup /tmp/lib64 on Linux
 
     List<String> aapt2CommandLine = new ArrayList<>();
     aapt2CommandLine.add(getResource(aapt2Tool));

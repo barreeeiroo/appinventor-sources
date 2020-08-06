@@ -15,8 +15,9 @@ import java.util.Set;
 /**
  * compiler.writeAndroidManifest()
  */
+// CreateManifest
 @BuildType(apk = true, aab = true)
-public class AndroidManifest implements Task {
+public class CreateManifest implements Task {
   @Override
   public TaskResult execute(ExecutorContext context) {
     context.getPaths().setManifest(new File(context.getPaths().getBuildDir(), "AndroidManifest.xml"));

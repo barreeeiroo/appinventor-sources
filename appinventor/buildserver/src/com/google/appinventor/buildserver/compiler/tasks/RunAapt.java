@@ -12,8 +12,9 @@ import java.util.List;
 /**
  * compiler.aapt()
  */
-@BuildType(apk = true, aab = true)
-public class Aapt implements Task {
+// RunAapt
+@BuildType(apk = true, aab = false)
+public class RunAapt implements Task {
   @Override
   public TaskResult execute(ExecutorContext context) {
     // Need to make sure assets directory exists otherwise aapt will fail.

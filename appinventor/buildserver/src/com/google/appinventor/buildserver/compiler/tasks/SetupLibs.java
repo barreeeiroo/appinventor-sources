@@ -12,7 +12,7 @@ import java.io.IOException;
  * libSetup()
  */
 @BuildType(apk = true, aab = true)
-public class LibsSetup implements Task {
+public class SetupLibs implements Task {
   @Override
   public TaskResult execute(ExecutorContext context) {
     String osName = System.getProperty("os.name");

@@ -16,7 +16,7 @@ import java.util.zip.ZipOutputStream;
 
 
 @BuildType(aab = true)
-public class Bundletool implements Task {
+public class RunBundletool implements Task {
   private AabPaths aab;
 
   @Override

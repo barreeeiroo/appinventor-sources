@@ -17,7 +17,7 @@ import java.util.List;
  * compiler.prepareApplicationIcon()
  */
 @BuildType(apk = true, aab = true)
-public class PrepareApplicationIcon implements Task {
+public class PrepareAppIcon implements Task {
   @Override
   public TaskResult execute(ExecutorContext context) {
     // Create mipmap directories

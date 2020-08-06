@@ -55,7 +55,7 @@ public class Resources {
           System.out.println("[WARN] Could not mark resources as executable: " + file);
         }
         file.deleteOnExit();
-        if (!file.getParentFile().mkdirs()) {
+        if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
           System.out.println("[WARN] Could not make directory: " + file.getParentFile());
         }
         Files.copy(com.google.common.io.Resources.newInputStreamSupplier(Executor.class.getResource(resourcePath)),

@@ -20,6 +20,9 @@ import java.util.Map;
  * compiler.writeICLauncherBackground()
  *
  */
+// createValuesXml
+// createResXml
+// GenerateXmlRes
 @BuildType(apk = true, aab = true)
 public class XmlConfig implements Task {
   ExecutorContext context;

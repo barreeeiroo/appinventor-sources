@@ -21,7 +21,6 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
-import org.apache.commons.io.FileUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -177,32 +176,29 @@ public final class ProjectBuilder {
             .withType(ext)
             .build();
 
-        switch (ext) {
-          case BuildType.AAB_EXTENSION:
-            compiler.add(ReadBuildInfo.class);
-            compiler.add(LoadComponentInfo.class);
-            compiler.add(PrepareApplicationIcon.class);
-            compiler.add(XmlConfig.class);
-            compiler.add(AndroidManifest.class);
-            compiler.add(RawFiles.class);
-            compiler.add(MergeResources.class);
-            compiler.add(LibsSetup.class);
-            compiler.add(Aapt2.class);
-            compiler.add(Bundletool.class);
-            break;
+        compiler.add(ReadBuildInfo.class);
+        compiler.add(LoadComponentInfo.class);
+        compiler.add(PrepareAppIcon.class);
+        compiler.add(XmlConfig.class);
+        compiler.add(CreateManifest.class);
+        compiler.add(AttachNativeLibs.class);
+        compiler.add(AttachAarLibs.class);
+        compiler.add(AttachCompAssets.class);
+        compiler.add(MergeResources.class);
+        compiler.add(SetupLibs.class);
 
-          case BuildType.APK_EXTENSION:
-          default:
-            compiler.add(ReadBuildInfo.class);
-            compiler.add(LoadComponentInfo.class);
-            compiler.add(PrepareApplicationIcon.class);
-            compiler.add(XmlConfig.class);
-            compiler.add(AndroidManifest.class);
-            compiler.add(RawFiles.class);
-            compiler.add(MergeResources.class);
-            compiler.add(LibsSetup.class);
-            compiler.add(Aapt.class);
-            break;
+        if (BuildType.APK_EXTENSION.equals(ext)) {
+          compiler.add(RunAapt.class);
+        } else if (BuildType.AAB_EXTENSION.equals(ext)) {
+          compiler.add(RunAapt2.class);
+        }
+
+
+
+        if (BuildType.APK_EXTENSION.equals(ext)) {
+
+        } else if (BuildType.AAB_EXTENSION.equals(ext)) {
+          compiler.add(RunBundletool.class);
         }
 
         Future<Boolean> executor = Executors.newSingleThreadExecutor().submit(compiler);
@@ -245,7 +241,7 @@ public final class ProjectBuilder {
 
         // Note (ralph):  deleteRecursively has been removed from the guava-11.0.1 lib
         // Replacing with deleteDirectory, which is supposed to delete the entire directory.
-        FileUtils.deleteQuietly(new File(projectRoot.getCanonicalPath()));
+        // FileUtils.deleteQuietly(new File(projectRoot.getCanonicalPath()));
       }
     } catch (Exception e) {
       e.printStackTrace();

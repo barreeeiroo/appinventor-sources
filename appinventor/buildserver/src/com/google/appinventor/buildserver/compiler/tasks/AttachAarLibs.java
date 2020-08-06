@@ -27,7 +27,7 @@ public class AttachAarLibs implements Task {
     final Set<String> processedLibs = new HashSet<>();
 
     // Attach the Android support libraries (needed by every app)
-    context.getComponentInfo().getNativeLibsNeeded().put("ANDROID", new HashSet<>(Arrays.asList(context.getResources().getSupportAars())));
+    context.getComponentInfo().getLibsNeeded().put("ANDROID", new HashSet<>(Arrays.asList(context.getResources().getSupportAars())));
 
     // walk components list for libraries ending in ".aar"
     try {

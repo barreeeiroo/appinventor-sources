@@ -13,6 +13,7 @@ public class Paths {
   private File tmpDir;
   private File libsDir;
   private File assetsDir;
+  private File classesDir;
 
   private File manifest;
 
@@ -81,6 +82,14 @@ public class Paths {
 
   public void setAssetsDir(File assetsDir) {
     this.assetsDir = assetsDir;
+  }
+
+  public File getClassesDir() {
+    return classesDir;
+  }
+
+  public void setClassesDir(File classesDir) {
+    this.classesDir = classesDir;
   }
 
   public File getManifest() {

@@ -146,6 +146,7 @@ public class ExecutorContext {
       context.paths.setDrawableDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "drawable"));
       context.paths.setTmpDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "tmp"));
       context.paths.setLibsDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "libs"));
+      context.paths.setClassesDir(ExecutorUtils.createDir(context.paths.getBuildDir(), "classes"));
 
       context.resources = new Resources();
       context.componentInfo = new ComponentInfo();

@@ -193,7 +193,8 @@ public final class ProjectBuilder {
           compiler.add(RunAapt2.class);
         }
 
-
+        compiler.add(GenerateClasses.class);
+        compiler.add(RunMultidex.class);
 
         if (BuildType.APK_EXTENSION.equals(ext)) {
 

@@ -130,6 +130,23 @@ public class Resources {
     return null;
   }
 
+  public String aapt2() {
+    String osName = System.getProperty("os.name");
+    String aaptTool;
+    if (osName.equals("Mac OS X")) {
+      aaptTool = "/tools/mac/aapt2";
+    } else if (osName.equals("Linux")) {
+      aaptTool = "/tools/linux/aapt2";
+    } else if (osName.startsWith("Windows")) {
+      aaptTool = "/tools/windows/aapt2";
+    } else {
+      aaptTool = null;
+    }
+    if (aaptTool != null)
+      return getResource(aaptTool);
+    return null;
+  }
+
   public String jarsigner() {
     String osName = System.getProperty("os.name");
     String jarsignerTool;

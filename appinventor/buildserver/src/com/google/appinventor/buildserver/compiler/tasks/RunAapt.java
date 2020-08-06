@@ -13,7 +13,7 @@ import java.util.List;
  * compiler.aapt()
  */
 // RunAapt
-@BuildType(apk = true, aab = false)
+@BuildType(apk = true)
 public class RunAapt implements Task {
   @Override
   public TaskResult execute(ExecutorContext context) {

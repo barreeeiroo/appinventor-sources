@@ -57,10 +57,9 @@ public class RunAapt implements Task {
       context.getResources().setAppRTxt(new File(symbolOutputDir, "R.txt"));
     }
     String[] aaptPackageCommandLine = aaptPackageCommandLineArgs.toArray(new String[aaptPackageCommandLineArgs.size()]);
-    long startAapt = System.currentTimeMillis();
     // Using System.err and System.out on purpose. Don't want to pollute build messages with
     // tools output
-    if (!Execution.execute(null, aaptPackageCommandLine, System.out, System.err)) {
+    if (!Execution.execute(null, aaptPackageCommandLine, context.getReporter().getSystemOut(), System.err)) {
       return TaskResult.generateError("Error running AAPT");
     }
 

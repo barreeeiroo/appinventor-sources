@@ -58,6 +58,10 @@ public class Reporter {
     return (color ? colorCode : "");
   }
 
+  public PrintStream getSystemOut() {
+    return system;
+  }
+
 
   // UTILS TO REPORT MESSAGES
 

@@ -197,7 +197,9 @@ public final class ProjectBuilder {
         compiler.add(RunMultidex.class);
 
         if (BuildType.APK_EXTENSION.equals(ext)) {
-
+          compiler.add(RunApkBuilder.class);
+          compiler.add(RunZipAlign.class);
+          compiler.add(RunApkSigner.class);
         } else if (BuildType.AAB_EXTENSION.equals(ext)) {
           compiler.add(RunBundletool.class);
         }

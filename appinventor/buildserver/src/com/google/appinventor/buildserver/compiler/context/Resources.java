@@ -10,26 +10,40 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class Resources {
   private final ConcurrentMap<String, File> resources;
+  private final List<File> dexFiles;
+
   private String[] SUPPORT_JARS;
   private String[] SUPPORT_AARS;
 
   private File appRTxt;
 
-  public static final String RUNTIME_FILES_DIR = "/" + "files" + "/";
-  private static final String ANDROID_RUNTIME = RUNTIME_FILES_DIR + "android.jar";
+  // Kawa and DX processes can use a lot of memory. We only launch one Kawa or DX process at a time.
+  private static final Object SYNC_KAWA_OR_DX = new Object();
 
+  private static final String RUNTIME_FILES_DIR = "/" + "files" + "/";
+  private static final String ANDROID_RUNTIME = RUNTIME_FILES_DIR + "android.jar";
+  private static final String ACRA_RUNTIME = RUNTIME_FILES_DIR + "acra-4.4.0.jar";
+  private static final String KAWA_RUNTIME = RUNTIME_FILES_DIR + "kawa.jar";
+  private static final String SIMPLE_ANDROID_RUNTIME_JAR = RUNTIME_FILES_DIR + "AndroidRuntime.jar";
+  private static final String DX_JAR = RUNTIME_FILES_DIR + "dx.jar";
+  private static final String APKSIGNER_JAR = RUNTIME_FILES_DIR + "apksigner.jar";
+
+  private static final String YAIL_RUNTIME = RUNTIME_FILES_DIR + "runtime.scm";
   private static final String DEFAULT_ICON = RUNTIME_FILES_DIR + "ya.png";
 
-  private static final String COMP_BUILD_INFO = Resources.RUNTIME_FILES_DIR + "simple_components_build_info.json";
-  private static final String BUNDLETOOL_JAR = Resources.RUNTIME_FILES_DIR + "bundletool.jar";
+  private static final String COMP_BUILD_INFO = RUNTIME_FILES_DIR + "simple_components_build_info.json";
+  private static final String BUNDLETOOL_JAR = RUNTIME_FILES_DIR + "bundletool.jar";
 
   public Resources() {
     resources = new ConcurrentHashMap<>();
+    dexFiles = new ArrayList<>();
   }
 
   public synchronized String getResource(String resourcePath) {
@@ -69,12 +83,40 @@ public class Resources {
     }
   }
 
+  public List<File> getDexFiles() {
+    return dexFiles;
+  }
+
+  public Object getSyncKawaOrDx() {
+    return SYNC_KAWA_OR_DX;
+  }
+
   public String getRuntimeFilesDir() {
     return Resources.RUNTIME_FILES_DIR;
   }
 
   public String getAndroidRuntime() {
     return getResource(Resources.ANDROID_RUNTIME);
+  }
+
+  public String getAcraRuntime() {
+    return getResource(ACRA_RUNTIME);
+  }
+
+  public String getKawaRuntime() {
+    return getResource(KAWA_RUNTIME);
+  }
+
+  public String getSimpleAndroidRuntimeJar() {
+    return getResource(SIMPLE_ANDROID_RUNTIME_JAR);
+  }
+
+  public String getDxJar() {
+    return getResource(DX_JAR);
+  }
+
+  public String getApksignerJar() {
+    return APKSIGNER_JAR;
   }
 
   public String[] getSupportJars() {
@@ -101,8 +143,12 @@ public class Resources {
     this.appRTxt = appRTxt;
   }
 
+  public String getYailRuntime() {
+    return getResource(YAIL_RUNTIME);
+  }
+
   public BufferedImage getDefaultIcon() throws IOException {
-    return ImageIO.read(Executor.class.getResource(Resources.DEFAULT_ICON));
+    return ImageIO.read(Executor.class.getResource(DEFAULT_ICON));
   }
 
   public String getCompBuildInfo() {
@@ -144,6 +190,23 @@ public class Resources {
     }
     if (aaptTool != null)
       return getResource(aaptTool);
+    return null;
+  }
+
+  public String zipalign() {
+    String osName = System.getProperty("os.name");
+    String zipAlignTool;
+    if (osName.equals("Mac OS X")) {
+      zipAlignTool = "/tools/mac/zipalign";
+    } else if (osName.equals("Linux")) {
+      zipAlignTool = "/tools/linux/zipalign";
+    } else if (osName.startsWith("Windows")) {
+      zipAlignTool = "/tools/windows/zipalign";
+    } else {
+      zipAlignTool = null;
+    }
+    if (zipAlignTool != null)
+      return getResource(zipAlignTool);
     return null;
   }
 

@@ -151,7 +151,7 @@ public class RunBundletool implements Task {
     bundletoolCommandLine.add("--output=" + context.getPaths().getDeployFile().getAbsolutePath());
     String[] bundletoolBuildCommandLine = bundletoolCommandLine.toArray(new String[0]);
 
-    return Execution.execute(null, bundletoolBuildCommandLine, System.out, System.err);
+    return Execution.execute(null, bundletoolBuildCommandLine, context.getReporter().getSystemOut(), System.err);
   }
 
   private boolean jarsigner(ExecutorContext context) {
@@ -176,7 +176,7 @@ public class RunBundletool implements Task {
     jarsignerCommandLine.add("AndroidKey");
     String[] jarsignerSignCommandLine = jarsignerCommandLine.toArray(new String[0]);
 
-    return Execution.execute(null, jarsignerSignCommandLine, System.out, System.err);
+    return Execution.execute(null, jarsignerSignCommandLine, context.getReporter().getSystemOut(), System.err);
   }
 }
 

@@ -3,6 +3,9 @@ package com.google.appinventor.buildserver.compiler;
 import com.google.appinventor.buildserver.Project;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +31,25 @@ public final class ExecutorUtils {
       }
     }
     return dir;
+  }
+
+  public static Boolean copyFile(String srcPath, String dstPath) {
+    try {
+      FileInputStream in = new FileInputStream(srcPath);
+      FileOutputStream out = new FileOutputStream(dstPath);
+      byte[] buf = new byte[1024];
+      int len;
+      while ((len = in.read(buf)) > 0) {
+        out.write(buf, 0, len);
+      }
+      in.close();
+      out.close();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      return false;
+    }
+    return true;
   }
 
   public static String getExtCompDirPath(String type, Project project, Map<String, String> extTypePathCache) {

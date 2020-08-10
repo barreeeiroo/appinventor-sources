@@ -49,7 +49,7 @@ public class RunAapt2 implements Task {
     aapt2CommandLine.add("-v");
     String[] aapt2CompileCommandLine = aapt2CommandLine.toArray(new String[0]);
 
-    if (!Execution.execute(null, aapt2CompileCommandLine, System.out, System.err)) {
+    if (!Execution.execute(null, aapt2CompileCommandLine, context.getReporter().getSystemOut(), System.err)) {
       context.getReporter().error("Could not execute AAPT2 compile step");
       return false;
     }
@@ -84,7 +84,7 @@ public class RunAapt2 implements Task {
     aapt2CommandLine.add("-v");
     String[] aapt2LinkCommandLine = aapt2CommandLine.toArray(new String[0]);
 
-    if (!Execution.execute(null, aapt2LinkCommandLine, System.out, System.err)) {
+    if (!Execution.execute(null, aapt2LinkCommandLine, context.getReporter().getSystemOut(), System.err)) {
       context.getReporter().error("Could not execute AAPT2 link step");
       return false;
     }

@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 
 
 @BuildType(apk = true, aab = true)
@@ -62,27 +61,27 @@ public class GenerateClasses implements Task {
       }
 
       if (!userCodeExists) {
-        userErrors.print(NO_USER_CODE_ERROR);
-        return false;
+        return TaskResult.generateError("No user code exists");
       }
 
       // Construct the class path including component libraries (jars)
-      StringBuilder classpath = new StringBuilder(getResource(KAWA_RUNTIME));
+      StringBuilder classpath = new StringBuilder(context.getResources().getKawaRuntime());
       classpath.append(File.pathSeparator);
-      classpath.append(getResource(ACRA_RUNTIME));
+      classpath.append(context.getResources().getAcraRuntime());
       classpath.append(File.pathSeparator);
-      classpath.append(getResource(SIMPLE_ANDROID_RUNTIME_JAR));
+      classpath.append(context.getResources().getSimpleAndroidRuntimeJar());
       classpath.append(File.pathSeparator);
 
-      for (String jar : SUPPORT_JARS) {
-        classpath.append(getResource(jar));
+      for (String jar : context.getResources().getSupportJars()) {
+        classpath.append(context.getResource(jar));
         classpath.append(File.pathSeparator);
       }
 
       // attach the jars of external comps
       Set<String> addedExtJars = new HashSet<String>();
-      for (String type : extCompTypes) {
-        String sourcePath = getExtCompDirPath(type) + SIMPLE_ANDROID_RUNTIME_JAR;
+      for (String type : context.getExtCompTypes()) {
+        String sourcePath = ExecutorUtils.getExtCompDirPath(type, context.getProject(), context.getExtTypePathCache()) +
+            context.getResources().getSimpleAndroidRuntimeJar();
         if (!addedExtJars.contains(sourcePath)) {  // don't add multiple copies for bundled extensions
           classpath.append(sourcePath);
           classpath.append(File.pathSeparator);
@@ -91,21 +90,21 @@ public class GenerateClasses implements Task {
       }
 
       // Add component library names to classpath
-      for (String type : libsNeeded.keySet()) {
-        for (String lib : libsNeeded.get(type)) {
+      for (String type : context.getComponentInfo().getLibsNeeded().keySet()) {
+        for (String lib : context.getComponentInfo().getLibsNeeded().get(type)) {
           String sourcePath = "";
-          String pathSuffix = RUNTIME_FILES_DIR + lib;
+          String pathSuffix = context.getResources().getRuntimeFilesDir() + lib;
 
-          if (simpleCompTypes.contains(type)) {
-            sourcePath = getResource(pathSuffix);
-          } else if (extCompTypes.contains(type)) {
-            sourcePath = getExtCompDirPath(type) + pathSuffix;
+          if (context.getSimpleCompTypes().contains(type)) {
+            sourcePath = context.getResource(pathSuffix);
+          } else if (context.getExtCompTypes().contains(type)) {
+            sourcePath = ExecutorUtils.getExtCompDirPath(type, context.getProject(), context.getExtTypePathCache()) + pathSuffix;
           } else {
-            userErrors.print(String.format(ERROR_IN_STAGE, "Compile"));
-            return false;
+            context.getReporter().error("Found a lost component", true);
+            return TaskResult.generateError("Error while generating classes");
           }
 
-          uniqueLibsNeeded.add(sourcePath);
+          context.getComponentInfo().getUniqueLibsNeeded().add(sourcePath);
 
           classpath.append(sourcePath);
           classpath.append(File.pathSeparator);
@@ -113,26 +112,26 @@ public class GenerateClasses implements Task {
       }
 
       // Add dependencies for classes.jar in any AAR libraries
-      for (File classesJar : explodedAarLibs.getClasses()) {
+      for (File classesJar : context.getComponentInfo().getExplodedAarLibs().getClasses()) {
         if (classesJar != null) {  // true for optimized AARs in App Inventor libs
           final String abspath = classesJar.getAbsolutePath();
-          uniqueLibsNeeded.add(abspath);
+          context.getComponentInfo().getUniqueLibsNeeded().add(abspath);
           classpath.append(abspath);
           classpath.append(File.pathSeparator);
         }
       }
-      if (explodedAarLibs.size() > 0) {
-        classpath.append(explodedAarLibs.getOutputDirectory().getAbsolutePath());
+      if (context.getComponentInfo().getExplodedAarLibs().size() > 0) {
+        classpath.append(context.getComponentInfo().getExplodedAarLibs().getOutputDirectory().getAbsolutePath());
         classpath.append(File.pathSeparator);
       }
 
-      classpath.append(getResource(ANDROID_RUNTIME));
+      classpath.append(context.getResources().getAndroidRuntime());
 
-      System.out.println("Libraries Classpath = " + classpath);
+      context.getReporter().info("Libraries Classpath = " + classpath);
 
-      String yailRuntime = getResource(YAIL_RUNTIME);
+      String yailRuntime = context.getResources().getYailRuntime();
       List<String> kawaCommandArgs = Lists.newArrayList();
-      int mx = childProcessRamMb - 200;
+      int mx = context.getChildProcessRam() - 200;
       Collections.addAll(kawaCommandArgs,
           System.getProperty("java.home") + "/bin/java",
           "-Dfile.encoding=UTF-8",
@@ -140,8 +139,8 @@ public class GenerateClasses implements Task {
           "-cp", classpath.toString(),
           "kawa.repl",
           "-f", yailRuntime,
-          "-d", classesDir.getAbsolutePath(),
-          "-P", Signatures.getPackageName(project.getMainClass()) + ".",
+          "-d", context.getPaths().getClassesDir().getAbsolutePath(),
+          "-P", Signatures.getPackageName(context.getProject().getMainClass()) + ".",
           "-C");
       // TODO(lizlooney) - we are currently using (and have always used) absolute paths for the
       // source file names. The resulting .class files contain references to the source file names,
@@ -152,25 +151,19 @@ public class GenerateClasses implements Task {
       kawaCommandArgs.add(yailRuntime);
       String[] kawaCommandLine = kawaCommandArgs.toArray(new String[kawaCommandArgs.size()]);
 
-      long start = System.currentTimeMillis();
       // Capture Kawa compiler stderr. The ODE server parses out the warnings and errors and adds
       // them to the protocol buffer for logging purposes. (See
       // buildserver/ProjectBuilder.processCompilerOutout.
       ByteArrayOutputStream kawaOutputStream = new ByteArrayOutputStream();
       boolean kawaSuccess;
-      synchronized (SYNC_KAWA_OR_DX) {
-        kawaSuccess = Execution.execute(null, kawaCommandLine,
-            System.out, new PrintStream(kawaOutputStream));
+      synchronized (context.getResources().getSyncKawaOrDx()) {
+        kawaSuccess = Execution.execute(null, kawaCommandLine, context.getReporter().getSystemOut(), new PrintStream(kawaOutputStream));
       }
       if (!kawaSuccess) {
-        LOG.log(Level.SEVERE, "Kawa compile has failed.");
+        context.getReporter().error("Kawa compile has failed.", true);
       }
       String kawaOutput = kawaOutputStream.toString();
-      out.print(kawaOutput);
-      String kawaCompileTimeMessage = "Kawa compile time: " +
-          ((System.currentTimeMillis() - start) / 1000.0) + " seconds";
-      out.println(kawaCompileTimeMessage);
-      LOG.info(kawaCompileTimeMessage);
+      context.getReporter().getSystemOut().print(kawaOutput);
 
       // Check that all of the class files were created.
       // If they weren't, return with an error.

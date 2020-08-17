@@ -116,7 +116,7 @@ public class Resources {
   }
 
   public String getApksignerJar() {
-    return APKSIGNER_JAR;
+    return getResource(APKSIGNER_JAR);
   }
 
   public String[] getSupportJars() {

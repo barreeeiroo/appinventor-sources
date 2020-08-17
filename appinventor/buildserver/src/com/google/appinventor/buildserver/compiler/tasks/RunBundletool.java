@@ -25,6 +25,7 @@ public class RunBundletool implements Task {
 
     context.getReporter().info("Creating structure");
     aab.setROOT(ExecutorUtils.createDir(context.getProject().getBuildDirectory(), "aab"));
+    aab.setProtoApk(context.getPaths().getTmpPackageName());
     if (!createStructure(context)) {
       return TaskResult.generateError("Could not create AAB structure");
     }

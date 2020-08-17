@@ -6,11 +6,7 @@
 
 package com.google.appinventor.buildserver;
 
-import com.google.appinventor.buildserver.compiler.BuildType;
-import com.google.appinventor.buildserver.compiler.Executor;
-import com.google.appinventor.buildserver.compiler.ExecutorContext;
-import com.google.appinventor.buildserver.compiler.Reporter;
-import com.google.appinventor.buildserver.compiler.tasks.*;
+import com.google.appinventor.buildserver.tasks.*;
 import com.google.appinventor.common.utils.StringUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;

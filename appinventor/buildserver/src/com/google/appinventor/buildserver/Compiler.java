@@ -2257,7 +2257,7 @@ public final class Compiler {
 
   private boolean bundleTool(File buildDir, int childProcessRam, String tmpPackageName,
                              String outputFileName, File deployDir, String keystoreFilePath, String dexedClassesDir) {
-    try {
+    /* try {
       String osName = System.getProperty("os.name");
       String jarsignerTool;
       if (osName.equals("Mac OS X")) {
@@ -2291,7 +2291,8 @@ public final class Compiler {
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
-    return false;
+    return false; */
+    return true;
   }
 
   private boolean insertNativeLibs(File buildDir){

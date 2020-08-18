@@ -27,7 +27,7 @@ public class Resources {
   // Kawa and DX processes can use a lot of memory. We only launch one Kawa or DX process at a time.
   private static final Object SYNC_KAWA_OR_DX = new Object();
 
-  private static final String RUNTIME_FILES_DIR = "/" + "files" + "/";
+  public static final String RUNTIME_FILES_DIR = "/" + "files" + "/";
   private static final String ANDROID_RUNTIME = RUNTIME_FILES_DIR + "android.jar";
   private static final String ACRA_RUNTIME = RUNTIME_FILES_DIR + "acra-4.4.0.jar";
   private static final String KAWA_RUNTIME = RUNTIME_FILES_DIR + "kawa.jar";
@@ -35,7 +35,7 @@ public class Resources {
   private static final String DX_JAR = RUNTIME_FILES_DIR + "dx.jar";
   private static final String APKSIGNER_JAR = RUNTIME_FILES_DIR + "apksigner.jar";
 
-  private static final String YAIL_RUNTIME = RUNTIME_FILES_DIR + "runtime.scm";
+  public static final String YAIL_RUNTIME = RUNTIME_FILES_DIR + "runtime.scm";
   private static final String DEFAULT_ICON = RUNTIME_FILES_DIR + "ya.png";
 
   private static final String COMP_BUILD_INFO = RUNTIME_FILES_DIR + "simple_components_build_info.json";

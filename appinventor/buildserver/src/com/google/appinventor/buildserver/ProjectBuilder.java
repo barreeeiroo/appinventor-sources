@@ -67,7 +67,7 @@ public final class ProjectBuilder {
       YoungAndroidConstants.CODEBLOCKS_SOURCE_EXTENSION;
 
   private static final String ALL_COMPONENT_TYPES =
-      Compiler.RUNTIME_FILES_DIR + "simple_components.txt";
+      com.google.appinventor.buildserver.context.Resources.RUNTIME_FILES_DIR + "simple_components.txt";
 
   public File getOutputApk() {
     return outputApk;
@@ -150,9 +150,6 @@ public final class ProjectBuilder {
 
         // Generate the compiler context
         Reporter r = new Reporter(reporter);
-        /* ExecutorContext context = new ExecutorContext(project, componentTypes, componentBlocks, r,
-            isForCompanion, isForEmulator, includeDangerousPermissions, keyStorePath,
-            childProcessRam, dexCachePath, outputFileName); */
         ExecutorContext context = new ExecutorContext.Builder(project, ext)
             .withTypes(componentTypes)
             .withBlocks(componentBlocks)
@@ -183,6 +180,7 @@ public final class ProjectBuilder {
         compiler.add(MergeResources.class);
         compiler.add(SetupLibs.class);
 
+        // TODO: Upgrade APK to AAPT2
         if (BuildType.APK_EXTENSION.equals(ext)) {
           compiler.add(RunAapt.class);
         } else if (BuildType.AAB_EXTENSION.equals(ext)) {

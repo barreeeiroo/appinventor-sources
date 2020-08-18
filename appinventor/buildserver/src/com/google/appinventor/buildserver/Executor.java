@@ -21,6 +21,8 @@ import java.util.concurrent.Callable;
  * style pattern, where receives build information, and then
  * {@link Task} can be added.</p>
  *
+ * @see ExecutorContext
+ *
  * @author diego@barreiro.xyz (Diego Barreiro)
  */
 public class Executor implements Callable<Boolean> {
@@ -45,7 +47,7 @@ public class Executor implements Callable<Boolean> {
     }
 
     // Specifies the build type (the extension output actually).
-    // Only accepts the one specified in BuildType interface.
+    // Only accepts the one specified in BuildType annotation.
     public Builder withType(String ext) {
       if (ext == null || !ext.equals(BuildType.APK_EXTENSION) && !ext.equals(BuildType.AAB_EXTENSION)) {
         System.out.println("[ERROR] BuildType '" + ext + "' is not supported!");
@@ -102,9 +104,11 @@ public class Executor implements Callable<Boolean> {
     }
 
     for (int i = 0; i < TASKS_SIZE; i++) {
+      // We accept Class'es, but not initialized ones.
       Class<? extends Task> task = this.tasks.get(i);
       String taskName = task.getSimpleName();
 
+      // We try to initialize a Task instance.
       Object taskObject;
       try {
         taskObject = task.newInstance();
@@ -114,6 +118,9 @@ public class Executor implements Callable<Boolean> {
         return false;
       }
 
+      // Task's will have an annotation to make sure they only run in
+      // the specified build type. If no annotation present, we throw
+      // a warning.
       if (task.isAnnotationPresent(BuildType.class)) {
         BuildType buildType = task.getAnnotation(BuildType.class);
         switch (ext) {
@@ -135,9 +142,11 @@ public class Executor implements Callable<Boolean> {
         context.getReporter().warn("Task " + taskName + " does not contain build type targets!");
       }
 
-      long start = System.currentTimeMillis();
+      // Get the current time to know the time needed to execute it.
       context.getReporter().taskStart(taskName);
+      long start = System.currentTimeMillis();
 
+      // And then invoke the execute(ExecutorContext) method to run the Task.
       TaskResult result = null;
       try {
         Method execute = task.getMethod("execute", ExecutorContext.class);
@@ -145,17 +154,21 @@ public class Executor implements Callable<Boolean> {
       } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
         context.getReporter().taskError(-1);
         e.printStackTrace();
+        return false;
       }
       double endTime = (System.currentTimeMillis() - start) / 1000.0;
 
+      // Make sure result is success, else we'll throw an error and don't run
+      // more tasks.
       if (result == null || !result.isSuccess()) {
         context.getReporter().error(result == null || result.getError() == null ? "Unknown exception" : result.getError().getMessage(), true);
         context.getReporter().taskError(endTime);
         return false;
       }
 
+      // Update progress depending on the number of steps.
       context.getReporter().setProgress(((i + 1) * 100) / TASKS_SIZE);
-      context.getReporter().taskSuccess((System.currentTimeMillis() - start) / 1000.0);
+      context.getReporter().taskSuccess(endTime);
     }
     return true;
   }

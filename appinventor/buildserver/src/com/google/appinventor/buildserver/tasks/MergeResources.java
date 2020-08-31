@@ -13,7 +13,7 @@ import java.io.File;
 @BuildType(apk = true, aab = true)
 public class MergeResources implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     // these should exist from earlier build steps
     File intermediates = ExecutorUtils.createDir(context.getPaths().getBuildDir(), "intermediates");
     File resDir = ExecutorUtils.createDir(intermediates, "res");

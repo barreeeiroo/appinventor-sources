@@ -2,7 +2,7 @@ package com.google.appinventor.buildserver.tasks;
 
 import com.android.sdklib.build.ApkBuilder;
 import com.google.appinventor.buildserver.BuildType;
-import com.google.appinventor.buildserver.ExecutorContext;
+import com.google.appinventor.buildserver.CompilerContext;
 import com.google.appinventor.buildserver.Task;
 import com.google.appinventor.buildserver.TaskResult;
 
@@ -14,7 +14,7 @@ import java.io.File;
 @BuildType(apk = true)
 public class RunApkBuilder implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     try {
       ApkBuilder apkBuilder = new ApkBuilder(
           context.getPaths().getDeployFile().getAbsolutePath(),

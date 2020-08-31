@@ -14,7 +14,7 @@ import java.io.IOException;
 @BuildType(apk = true, aab = true)
 public class AttachCompAssets implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     try {
       // Gather non-library assets to be added to apk's Asset directory.
       // The assets directory have been created before this.

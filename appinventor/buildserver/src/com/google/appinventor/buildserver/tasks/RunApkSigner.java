@@ -2,7 +2,7 @@ package com.google.appinventor.buildserver.tasks;
 
 import com.google.appinventor.buildserver.Execution;
 import com.google.appinventor.buildserver.BuildType;
-import com.google.appinventor.buildserver.ExecutorContext;
+import com.google.appinventor.buildserver.CompilerContext;
 import com.google.appinventor.buildserver.Task;
 import com.google.appinventor.buildserver.TaskResult;
 
@@ -13,7 +13,7 @@ import com.google.appinventor.buildserver.TaskResult;
 @BuildType(apk = true)
 public class RunApkSigner implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     int mx = context.getChildProcessRam() - 200;
     /*
       apksigner sign\

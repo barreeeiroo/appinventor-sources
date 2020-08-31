@@ -150,7 +150,7 @@ public final class ProjectBuilder {
 
         // Generate the compiler context
         Reporter r = new Reporter(reporter);
-        ExecutorContext context = new ExecutorContext.Builder(project, ext)
+        CompilerContext context = new CompilerContext.Builder(project, ext)
             .withTypes(componentTypes)
             .withBlocks(componentBlocks)
             .withReporter(r)
@@ -164,7 +164,7 @@ public final class ProjectBuilder {
             .build();
 
         // Invoke YoungAndroid compiler
-        Executor compiler = new Executor.Builder()
+        Compiler compiler = new Compiler.Builder()
             .withContext(context)
             .withType(ext)
             .build();

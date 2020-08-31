@@ -24,10 +24,10 @@ import java.util.Map;
 // GenerateXmlRes
 @BuildType(apk = true, aab = true)
 public class XmlConfig implements Task {
-  ExecutorContext context;
+  CompilerContext context;
 
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     this.context = context;
 
     // Create the "any" dpi dir

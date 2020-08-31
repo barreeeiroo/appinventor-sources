@@ -26,11 +26,11 @@ import java.util.concurrent.ConcurrentMap;
  */
 @BuildType(apk = true, aab = true)
 public class LoadComponentInfo implements Task {
-  ExecutorContext context = null;
+  CompilerContext context = null;
   private ConcurrentMap<String, Map<String, Map<String, Set<String>>>> conditionals;
 
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     this.context = context;
     this.conditionals = new ConcurrentHashMap<>();
 

@@ -14,7 +14,7 @@ import java.util.List;
 @BuildType(apk = true)
 public class RunAapt implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     // Need to make sure assets directory exists otherwise aapt will fail.
     context.getPaths().setAssetsDir(ExecutorUtils.createDir(context.getProject().getBuildDirectory(), YoungAndroidConstants.ASSET_DIR_NAME));
 

@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ExecutorContext {
+public class CompilerContext {
   private Project project;
   private String ext;
   private Set<String> compTypes;
@@ -109,8 +109,8 @@ public class ExecutorContext {
       return this;
     }
 
-    public ExecutorContext build() {
-      ExecutorContext context = new ExecutorContext();
+    public CompilerContext build() {
+      CompilerContext context = new CompilerContext();
       if (project == null) {
         System.out.println("[ERROR] ExecutorContext needs Project");
         return null;
@@ -164,7 +164,7 @@ public class ExecutorContext {
     }
   }
 
-  private ExecutorContext() {
+  private CompilerContext() {
   }
 
   public Project getProject() {

@@ -19,7 +19,7 @@ import java.util.List;
 @BuildType(apk = true, aab = true)
 public class PrepareAppIcon implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     // Create mipmap directories
     context.getReporter().info("Creating mipmap dirs...");
     File mipmapHdpi = ExecutorUtils.createDir(context.getPaths().getResDir(), "mipmap-hdpi");
@@ -43,7 +43,7 @@ public class PrepareAppIcon implements Task {
   /*
    * Loads the icon for the application, either a user provided one or the default one.
    */
-  private boolean prepareApplicationIcon(ExecutorContext context, File outputPngFile, List<File> mipmapDirectories, List<Integer> standardICSizes, List<Integer> foregroundICSizes) {
+  private boolean prepareApplicationIcon(CompilerContext context, File outputPngFile, List<File> mipmapDirectories, List<Integer> standardICSizes, List<Integer> foregroundICSizes) {
     String userSpecifiedIcon = Strings.nullToEmpty(context.getProject().getIcon());
     try {
       BufferedImage icon;

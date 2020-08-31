@@ -12,10 +12,10 @@ import java.util.Set;
 
 @BuildType(apk = true, aab = true)
 public class GenerateClasses implements Task {
-  ExecutorContext context;
+  CompilerContext context;
 
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     this.context = context;
 
     if (!this.compileRClasses()) {

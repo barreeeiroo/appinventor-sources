@@ -14,7 +14,7 @@ import java.util.zip.ZipInputStream;
 @BuildType(apk = true, aab = true)
 public class RunMultidex implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     Set<String> mainDexClasses = new HashSet<>();
     List<File> inputList = new ArrayList<>();
     boolean success;

@@ -6,5 +6,5 @@ public interface Task {
    *
    * @return TaskResult
    */
-  TaskResult execute(ExecutorContext context);
+  TaskResult execute(CompilerContext context);
 }

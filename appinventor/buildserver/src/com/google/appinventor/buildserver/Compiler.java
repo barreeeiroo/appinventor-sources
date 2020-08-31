@@ -21,19 +21,19 @@ import java.util.concurrent.Callable;
  * style pattern, where receives build information, and then
  * {@link Task} can be added.</p>
  *
- * @see ExecutorContext
+ * @see CompilerContext
  *
  * @author diego@barreiro.xyz (Diego Barreiro)
  */
-public class Executor implements Callable<Boolean> {
+public class Compiler implements Callable<Boolean> {
   private final List<Class<? extends Task>> tasks;
-  private ExecutorContext context;
+  private CompilerContext context;
   private String ext = BuildType.APK_EXTENSION;
 
   // The Builder class will construct a Executor object on which Task's
   // can be added.
   public static class Builder {
-    private ExecutorContext context;
+    private CompilerContext context;
     private String ext;
 
     public Builder() {
@@ -41,7 +41,7 @@ public class Executor implements Callable<Boolean> {
 
     // Passes the previously constructed ExecutorContext with all
     // build info.
-    public Builder withContext(ExecutorContext context) {
+    public Builder withContext(CompilerContext context) {
       this.context = context;
       return this;
     }
@@ -59,7 +59,7 @@ public class Executor implements Callable<Boolean> {
 
     // Constructs the Executor object, making sure all needed
     // attributes are passed.
-    public Executor build() {
+    public Compiler build() {
       if (context == null) {
         System.out.println("[ERROR] ExecutorContext was not provided to Executor");
         return null;
@@ -68,21 +68,21 @@ public class Executor implements Callable<Boolean> {
         System.out.println("[WARN] No BuildType specified; using BuildType.APK_EXTENSION");
       }
 
-      Executor executor = new Executor();
-      executor.context = context;
-      executor.ext = ext;
-      return executor;
+      Compiler compiler = new Compiler();
+      compiler.context = context;
+      compiler.ext = ext;
+      return compiler;
     }
   }
 
   // Actually, constructor is private, as it will be always
   // built using the Executor.Builder.
-  private Executor() {
+  private Compiler() {
     this.tasks = new ArrayList<>();
   }
 
   // Adds a new Task to the build.
-  public Executor add(Class<? extends Task> task) {
+  public Compiler add(Class<? extends Task> task) {
     assert task != null;
     this.tasks.add(task);
     return this;
@@ -149,7 +149,7 @@ public class Executor implements Callable<Boolean> {
       // And then invoke the execute(ExecutorContext) method to run the Task.
       TaskResult result = null;
       try {
-        Method execute = task.getMethod("execute", ExecutorContext.class);
+        Method execute = task.getMethod("execute", CompilerContext.class);
         result = (TaskResult) execute.invoke(taskObject, context);
       } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
         context.getReporter().taskError(-1);

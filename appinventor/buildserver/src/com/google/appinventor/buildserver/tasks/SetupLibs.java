@@ -1,6 +1,7 @@
 package com.google.appinventor.buildserver.tasks;
 
 import com.google.appinventor.buildserver.*;
+import com.google.appinventor.buildserver.Compiler;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
@@ -14,7 +15,7 @@ import java.io.IOException;
 @BuildType(apk = true, aab = true)
 public class SetupLibs implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     String osName = System.getProperty("os.name");
     if (osName.equals("Linux")) {
       ensureLib("/tmp/lib64", "libc++.so", "/tools/linux/lib64/libc++.so");
@@ -32,7 +33,7 @@ public class SetupLibs implements Task {
       }
       File tmpLibDir = new File(tempdir);
       tmpLibDir.mkdirs();
-      Files.copy(Resources.newInputStreamSupplier(Executor.class.getResource(resource)), outFile);
+      Files.copy(Resources.newInputStreamSupplier(Compiler.class.getResource(resource)), outFile);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

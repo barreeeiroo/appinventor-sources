@@ -19,7 +19,7 @@ public class RunBundletool implements Task {
   private AabPaths aab;
 
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     this.aab = new AabPaths();
 
     context.getReporter().info("Creating structure");
@@ -46,7 +46,7 @@ public class RunBundletool implements Task {
     return TaskResult.generateSuccess();
   }
 
-  private boolean createStructure(ExecutorContext context) {
+  private boolean createStructure(CompilerContext context) {
     // Manifest is extracted from the protobuffed APK
     aab.setManifestDir(ExecutorUtils.createDir(aab.getROOT(), "manifest"));
 
@@ -89,7 +89,7 @@ public class RunBundletool implements Task {
     return true;
   }
 
-  private boolean extractProtobuf(ExecutorContext context) {
+  private boolean extractProtobuf(CompilerContext context) {
     try (ZipInputStream is = new ZipInputStream(new FileInputStream(aab.getProtoApk()))) {
       ZipEntry entry;
       byte[] buffer = new byte[1024];
@@ -127,7 +127,7 @@ public class RunBundletool implements Task {
     return false;
   }
 
-  private boolean bundletool(ExecutorContext context) {
+  private boolean bundletool(CompilerContext context) {
     aab.setBASE(new File(context.getProject().getBuildDirectory(), "base.zip"));
 
     if (!AabZipper.zipBundle(aab.getROOT(), aab.getBASE(), aab.getROOT().getName() + File.separator)) {
@@ -154,7 +154,7 @@ public class RunBundletool implements Task {
     return Execution.execute(null, bundletoolBuildCommandLine, context.getReporter().getSystemOut(), System.err);
   }
 
-  private boolean jarsigner(ExecutorContext context) {
+  private boolean jarsigner(CompilerContext context) {
     List<String> jarsignerCommandLine = new ArrayList<String>();
 
     String jarsigner = context.getResources().jarsigner();

@@ -15,7 +15,7 @@ import java.io.IOException;
 @BuildType(apk = true, aab = true)
 public class AttachNativeLibs implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     context.getPaths().setLibsDir(ExecutorUtils.createDir(context.getPaths().getBuildDir(), YoungAndroidConstants.LIBS_DIR_NAME));
     File armeabiDir = ExecutorUtils.createDir(context.getPaths().getLibsDir(), YoungAndroidConstants.ARMEABI_DIR_NAME);
     File armeabiV7aDir = ExecutorUtils.createDir(context.getPaths().getLibsDir(), YoungAndroidConstants.ARMEABI_V7A_DIR_NAME);

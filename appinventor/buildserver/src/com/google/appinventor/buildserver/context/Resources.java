@@ -2,7 +2,7 @@ package com.google.appinventor.buildserver.context;
 
 
 import com.google.appinventor.buildserver.PathUtil;
-import com.google.appinventor.buildserver.Executor;
+import com.google.appinventor.buildserver.Compiler;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
@@ -72,7 +72,7 @@ public class Resources {
         if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
           System.out.println("[WARN] Could not make directory: " + file.getParentFile());
         }
-        Files.copy(com.google.common.io.Resources.newInputStreamSupplier(Executor.class.getResource(resourcePath)),
+        Files.copy(com.google.common.io.Resources.newInputStreamSupplier(Compiler.class.getResource(resourcePath)),
             file);
         resources.put(resourcePath, file);
       }
@@ -152,7 +152,7 @@ public class Resources {
   }
 
   public BufferedImage getDefaultIcon() throws IOException {
-    return ImageIO.read(Executor.class.getResource(DEFAULT_ICON));
+    return ImageIO.read(Compiler.class.getResource(DEFAULT_ICON));
   }
 
   public String getCompBuildInfo() {

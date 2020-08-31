@@ -1,6 +1,7 @@
 package com.google.appinventor.buildserver.tasks;
 
 import com.google.appinventor.buildserver.*;
+import com.google.appinventor.buildserver.Compiler;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import org.codehaus.jettison.json.JSONArray;
@@ -26,10 +27,10 @@ import java.util.Set;
 @BuildType(apk = true, aab = true)
 public class ReadBuildInfo implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     List<String> aars = new ArrayList<>();
     List<String> jars = new ArrayList<>();
-    try (BufferedReader in = new BufferedReader(new InputStreamReader(Executor.class.getResourceAsStream(context.getResources().getRuntimeFilesDir() + "aars.txt")))) {
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(Compiler.class.getResourceAsStream(context.getResources().getRuntimeFilesDir() + "aars.txt")))) {
       String line;
       while ((line = in.readLine()) != null) {
         if (!line.isEmpty()) {
@@ -43,7 +44,7 @@ public class ReadBuildInfo implements Task {
       return TaskResult.generateError(e);
     }
     context.getResources().setSupportAars(aars.toArray(new String[0]));
-    try (BufferedReader in = new  BufferedReader(new InputStreamReader(Executor.class.getResourceAsStream(context.getResources().getRuntimeFilesDir() + "jars.txt")))) {
+    try (BufferedReader in = new  BufferedReader(new InputStreamReader(Compiler.class.getResourceAsStream(context.getResources().getRuntimeFilesDir() + "jars.txt")))) {
       String line;
       while ((line = in.readLine()) != null) {
         if (!line.isEmpty()) {

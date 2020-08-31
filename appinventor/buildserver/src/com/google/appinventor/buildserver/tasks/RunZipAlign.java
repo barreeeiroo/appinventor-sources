@@ -10,7 +10,7 @@ import java.io.File;
 @BuildType(apk = true)
 public class RunZipAlign implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     String zipAlignTool = context.getResources().zipalign();
     if (zipAlignTool == null) {
       return TaskResult.generateError("Could not find a suitable ZipAlign tool for this OS");

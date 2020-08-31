@@ -8,11 +8,11 @@ import java.util.List;
 
 @BuildType(aab = true)
 public class RunAapt2 implements Task {
-  ExecutorContext context;
+  CompilerContext context;
   File resourcesZip;
 
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     this.context = context;
 
     File sourceOutputDir = ExecutorUtils.createDir(context.getPaths().getBuildDir(), "generated/src");

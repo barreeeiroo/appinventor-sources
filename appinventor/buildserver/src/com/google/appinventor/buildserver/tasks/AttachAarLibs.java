@@ -19,7 +19,7 @@ import java.util.Set;
 @BuildType(apk = true, aab = true)
 public class AttachAarLibs implements Task {
   @Override
-  public TaskResult execute(ExecutorContext context) {
+  public TaskResult execute(CompilerContext context) {
     final File explodedBaseDir = ExecutorUtils.createDir(context.getPaths().getBuildDir(), "exploded-aars");
     final File generatedDir = ExecutorUtils.createDir(context.getPaths().getBuildDir(), "generated");
     final File genSrcDir = ExecutorUtils.createDir(generatedDir, "src");

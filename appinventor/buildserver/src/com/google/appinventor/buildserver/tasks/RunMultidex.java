@@ -57,7 +57,7 @@ public class RunMultidex implements Task {
       Set<String> addedExtJars = new HashSet<>();
       for (String type : context.getExtCompTypes()) {
         String sourcePath = ExecutorUtils.getExtCompDirPath(type, context.getProject(), context.getExtTypePathCache()) +
-            context.getResources().getSimpleAndroidRuntimeJar();
+            context.getResources().getSimpleAndroidRuntimeJarPath();
         if (!addedExtJars.contains(sourcePath)) {
           inputList.add(new File(sourcePath));
           addedExtJars.add(sourcePath);

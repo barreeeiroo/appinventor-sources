@@ -111,6 +111,10 @@ public class Resources {
     return getResource(SIMPLE_ANDROID_RUNTIME_JAR);
   }
 
+  public String getSimpleAndroidRuntimeJarPath() {
+    return SIMPLE_ANDROID_RUNTIME_JAR;
+  }
+
   public String getDxJar() {
     return getResource(DX_JAR);
   }

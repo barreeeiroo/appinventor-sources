@@ -77,7 +77,7 @@ public class GenerateClasses implements Task {
       Set<String> addedExtJars = new HashSet<String>();
       for (String type : context.getExtCompTypes()) {
         String sourcePath = ExecutorUtils.getExtCompDirPath(type, context.getProject(), context.getExtTypePathCache()) +
-            context.getResources().getSimpleAndroidRuntimeJar();
+            context.getResources().getSimpleAndroidRuntimeJarPath();
         if (!addedExtJars.contains(sourcePath)) {  // don't add multiple copies for bundled extensions
           classpath.append(sourcePath);
           classpath.append(File.pathSeparator);

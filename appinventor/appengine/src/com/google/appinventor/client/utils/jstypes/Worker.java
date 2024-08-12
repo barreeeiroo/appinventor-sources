@@ -42,7 +42,7 @@ public class Worker {
 
   public Worker(String scriptURL, WorkerOptions opts) {}
 
-  public native void postMessage(Object message);
+  public native void postMessage(String message);
 
   public native void terminate();
 

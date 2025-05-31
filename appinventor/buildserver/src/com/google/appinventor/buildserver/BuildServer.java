@@ -471,7 +471,7 @@ public class BuildServer {
     File zipFile) throws IOException {
 
     if (!isBuildRequestAllowed(authHeader)) {
-      return Response.status(Response.Status.FORBIDDEN).type(MediaType.TEXT_PLAIN_TYPE).entity("No Shutdown Token").build();
+      return BuildServer.incorrectPasswordResponse().build();
     }
 
     // Set the inputZip field so we can delete the input zip file later in cleanUp.
@@ -522,7 +522,7 @@ public class BuildServer {
     File inputZipFile) throws IOException, JSONException {
 
     if (!isBuildRequestAllowed(authHeader)) {
-      return Response.status(Response.Status.FORBIDDEN).type(MediaType.TEXT_PLAIN_TYPE).entity("No Shutdown Token").build();
+      return BuildServer.incorrectPasswordResponse().build();
     }
 
     // Set the inputZip field so we can delete the input zip file later in cleanUp.
@@ -586,7 +586,7 @@ public class BuildServer {
     final File inputZipFile) throws IOException {
 
     if (!isBuildRequestAllowed(authHeader)) {
-      return Response.status(Response.Status.FORBIDDEN).type(MediaType.TEXT_PLAIN_TYPE).entity("No Shutdown Token").build();
+      return BuildServer.incorrectPasswordResponse().build();
     }
 
     // Set the inputZip field so we can delete the input zip file later in
@@ -960,13 +960,13 @@ public class BuildServer {
     }
 
     final String passwordValue = headerValue.substring(BuildServer.PASSWORD_HEADER_PREFIX.length());
-    if (!commandLineOptions.buildserverPassword.equals(passwordValue)) {
-      // Incorrect password
-      return false;
-    }
 
-    // All other checks have passed, so password matches
-    return true;
+    // Now just make sure the password matches
+    return commandLineOptions.buildserverPassword.equals(passwordValue);
+  }
+
+  private static Response.ResponseBuilder incorrectPasswordResponse() {
+    return Response.status(Response.Status.FORBIDDEN).type(MediaType.TEXT_PLAIN_TYPE).entity("Not Authorized");
   }
 
 }

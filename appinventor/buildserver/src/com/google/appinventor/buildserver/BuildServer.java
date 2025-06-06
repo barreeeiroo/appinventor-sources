@@ -139,7 +139,7 @@ public class BuildServer {
     String shutdownToken = null;
 
     @Option(name = "--buildserverPassword",
-            usage = "Password needed to invoke the buildserver.")
+      usage = "Password needed to invoke the buildserver.")
     String buildserverPassword = null;
 
     @Option(name = "--childProcessRamMb",

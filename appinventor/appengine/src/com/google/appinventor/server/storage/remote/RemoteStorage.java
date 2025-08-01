@@ -8,7 +8,9 @@ package com.google.appinventor.server.storage.remote;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.Base64;
 
 /**
  * Interface which abstracts the remote storage access patterns.
@@ -16,10 +18,13 @@ import java.time.Instant;
  *   GCP, and provide a presigned URL to download and/or access them.
  */
 public abstract class RemoteStorage {
+  private static final SecureRandom secureRandom = new SecureRandom();
+
   // We partition the bucket into different usage types, so specific lifecycle rules could
   //   be applied by prefix, if required.
   private final static String BUILD_OUTPUT_PREFIX = "build";
   private final static String PROJECT_EXPORT_PREFIX = "export";
+  private final static String PROJECT_IMPORT_PREFIX = "import";
 
   /**
    * Generates a, usually, presigned URL to upload the file to the remote
@@ -90,6 +95,22 @@ public abstract class RemoteStorage {
   }
 
   /**
+   * Generates a constant object key for a given specific project import.
+   *
+   * @param userId the user ID owning the project
+   * @param fileName the name of the file to store
+   * @return import/timestampRandomHash/file.name
+   */
+  public final String getProjectImportObjectKey(final String userId, final String fileName) {
+    final String randomString = generateRandomString();
+    final String timestamp = String.valueOf(Instant.now().getEpochSecond());
+    final String timestampHash = generateFieldsHash(fileName, timestamp, randomString);
+
+    final String filePath = userId + "/" + timestampHash;
+    return PROJECT_IMPORT_PREFIX + "/" + filePath + "/" + fileName;
+  }
+
+  /**
    * Generates a hash based on the input strings, separated by a pipe.
    *
    * @param fields the current timestamp
@@ -111,6 +132,17 @@ public abstract class RemoteStorage {
       // Fallback to a simple hash if SHA-256 is not available
       return String.valueOf(Math.abs((input).hashCode()));
     }
+  }
+
+  /**
+   * Generates some random bytes for increased hashing security, mainly when not
+   *   not using userId.
+   * @return random bytes
+   */
+  private String generateRandomString() {
+    byte[] randomBytes = new byte[64]; // 512 bits
+    secureRandom.nextBytes(randomBytes);
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
   }
 
 }

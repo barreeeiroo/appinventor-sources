@@ -10,7 +10,6 @@ import com.google.appinventor.client.ErrorReporter;
 import com.google.appinventor.client.Ode;
 import static com.google.appinventor.client.Ode.MESSAGES;
 import com.google.appinventor.client.OdeAsyncCallback;
-import com.google.appinventor.client.editor.youngandroid.DesignToolbar;
 import com.google.appinventor.client.explorer.project.Project;
 import com.google.appinventor.client.utils.Uploader;
 import com.google.appinventor.client.youngandroid.TextValidators;
@@ -22,11 +21,9 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import java.util.logging.Logger;
 
@@ -101,35 +98,46 @@ public class ProjectUploadWizard {
   }
 
   private void upload(FileUpload upload, String filename) {
-    String uploadUrl = ServerLayout.getModuleBaseURL() + ServerLayout.UPLOAD_SERVLET + "/"
-        + ServerLayout.UPLOAD_PROJECT + "/" + filename;
-    Uploader.getInstance().upload(upload, uploadUrl,
-        new OdeAsyncCallback<UploadResponse>(
-        // failure message
-        MESSAGES.projectUploadError()) {
-          @Override
-          public void onSuccess(UploadResponse uploadResponse) {
-            switch (uploadResponse.getStatus()) {
-              case SUCCESS:
-                String info = uploadResponse.getInfo();
-                UserProject userProject = UserProject.valueOf(info);
-                Ode ode = Ode.getInstance();
-                Project uploadedProject = ode.getProjectManager().addProject(userProject);
-                ode.openYoungAndroidProjectInDesigner(uploadedProject);
-                break;
-              case NOT_PROJECT_ARCHIVE:
-                // This may be a "severe" error; but in the
-                // interest of reducing the number of red errors, the 
-                // line has been changed to report info not an error.
-                // This error is triggered when the user attempts to
-                // upload a zip file that is not a project.
-                ErrorReporter.reportInfo(MESSAGES.notProjectArchiveError());
-                break;
-              default:
-                ErrorReporter.reportError(MESSAGES.projectUploadError());
-                break;
-            }
-          }
-      });
+    Ode.getInstance().getRemoteStorageService().getProjectImportUrl(filename, new OdeAsyncCallback<String>() {
+      @Override
+      public void onSuccess(final String s) {
+        String uploadUrl = ServerLayout.getModuleBaseURL() + ServerLayout.UPLOAD_SERVLET + "/"
+            + ServerLayout.UPLOAD_PROJECT + "/" + filename;
+
+        if (s != null) {
+          LOG.info("Upload URL is " + s);
+          uploadUrl = s;
+        }
+
+        Uploader.getInstance().upload(upload, uploadUrl,
+            new OdeAsyncCallback<UploadResponse>(
+                // failure message
+                MESSAGES.projectUploadError()) {
+              @Override
+              public void onSuccess(UploadResponse uploadResponse) {
+                switch (uploadResponse.getStatus()) {
+                  case SUCCESS:
+                    String info = uploadResponse.getInfo();
+                    UserProject userProject = UserProject.valueOf(info);
+                    Ode ode = Ode.getInstance();
+                    Project uploadedProject = ode.getProjectManager().addProject(userProject);
+                    ode.openYoungAndroidProjectInDesigner(uploadedProject);
+                    break;
+                  case NOT_PROJECT_ARCHIVE:
+                    // This may be a "severe" error; but in the
+                    // interest of reducing the number of red errors, the
+                    // line has been changed to report info not an error.
+                    // This error is triggered when the user attempts to
+                    // upload a zip file that is not a project.
+                    ErrorReporter.reportInfo(MESSAGES.notProjectArchiveError());
+                    break;
+                  default:
+                    ErrorReporter.reportError(MESSAGES.projectUploadError());
+                    break;
+                }
+              }
+            });
+      }
+    });
   }
 }

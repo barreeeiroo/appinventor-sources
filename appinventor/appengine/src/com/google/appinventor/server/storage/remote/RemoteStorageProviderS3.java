@@ -74,7 +74,7 @@ public final class RemoteStorageProviderS3 extends RemoteStorage {
 
   @Override
   public String generateUploadUrl(final String objectKey) {
-    return generatePresignedUrl(objectKey, "PUT", UPLOAD_EXPIRATION_SECONDS);
+    return generatePresignedUrl(objectKey, "POST", UPLOAD_EXPIRATION_SECONDS);
   }
 
   @Override

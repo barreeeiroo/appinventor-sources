@@ -245,4 +245,18 @@
     <servlet-name>componentService</servlet-name>
   </filter-mapping>
 
+  <!-- remote storage -->
+  <servlet>
+    <servlet-name>remoteStorageService</servlet-name>
+    <servlet-class>com.google.appinventor.server.RemoteStorageServiceImpl</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>remoteStorageService</servlet-name>
+    <url-pattern>/ode/remotestorage</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>remoteStorageService</servlet-name>
+  </filter-mapping>
+
 </web-app>

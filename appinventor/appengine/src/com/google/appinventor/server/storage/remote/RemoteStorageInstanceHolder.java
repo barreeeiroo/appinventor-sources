@@ -21,6 +21,7 @@ public class RemoteStorageInstanceHolder {
   public enum Usage {
     BUILD("build"),  // APK/AAB Artifacts
     EXPORT("export"),  // AIA Downloads
+    IMPORT("import")  // AIA Imports
     ;
 
     private final String flagName;

@@ -71,6 +71,8 @@ import com.google.appinventor.shared.rpc.project.ProjectService;
 import com.google.appinventor.shared.rpc.project.ProjectServiceAsync;
 import com.google.appinventor.shared.rpc.project.youngandroid.YoungAndroidProjectNode;
 import com.google.appinventor.shared.rpc.project.youngandroid.YoungAndroidSourceNode;
+import com.google.appinventor.shared.rpc.remotestorage.RemoteStorageService;
+import com.google.appinventor.shared.rpc.remotestorage.RemoteStorageServiceAsync;
 import com.google.appinventor.shared.rpc.tokenauth.TokenAuthService;
 import com.google.appinventor.shared.rpc.tokenauth.TokenAuthServiceAsync;
 import com.google.appinventor.shared.rpc.user.Config;
@@ -261,6 +263,7 @@ public class Ode implements EntryPoint {
 
   // Web service for component related operations
   private final ComponentServiceAsync componentService = GWT.create(ComponentService.class);
+  private final RemoteStorageServiceAsync remoteStorageService = GWT.create(RemoteStorageService.class);
   private final AdminInfoServiceAsync adminInfoService = GWT.create(AdminInfoService.class);
 
   //Web service for Token authentication operations
@@ -737,6 +740,7 @@ public class Ode implements EntryPoint {
     setupOrigin(projectService);
     setupOrigin(userInfoService);
     setupOrigin(componentService);
+    setupOrigin(remoteStorageService);
     setupOrigin(adminInfoService);
     setupOrigin(tokenAuthService);
 
@@ -984,6 +988,7 @@ public class Ode implements EntryPoint {
     rpcStatusPopup.register(projectService);
     rpcStatusPopup.register(userInfoService);
     rpcStatusPopup.register(componentService);
+    rpcStatusPopup.register(remoteStorageService);
 
     overDeckPanel = new FlowPanel("main");
     Window.setTitle(MESSAGES.titleYoungAndroid());
@@ -1206,6 +1211,15 @@ public class Ode implements EntryPoint {
    */
   public ComponentServiceAsync getComponentService() {
     return componentService;
+  }
+
+  /**
+   * Get an instance of the remote storage service.
+   *
+   * @return remote storage service instance
+   */
+  public RemoteStorageServiceAsync getRemoteStorageService() {
+    return remoteStorageService;
   }
 
   /**

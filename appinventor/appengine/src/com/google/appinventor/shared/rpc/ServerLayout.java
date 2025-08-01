@@ -47,6 +47,13 @@ public class ServerLayout {
 
   /**
    * Relative path of the
+   * {@link com.google.appinventor.shared.rpc.remotestorage.RemoteStorageService} within
+   * the ODE GWT module.
+   */
+  public static final String REMOTE_STORAGE_SERVICE = "remotestorage";
+
+  /**
+   * Relative path of the
    * {@link com.google.appinventor.shared.rpc.project.ProjectService} within
    * the ODE GWT module.
    */
@@ -184,7 +191,7 @@ public class ServerLayout {
   /**
    * Name of the form element to upload project archives.
    */
-  public static final String UPLOAD_PROJECT_ARCHIVE_FORM_ELEMENT = "uploadProjectArchive";
+  public static final String UPLOAD_PROJECT_ARCHIVE_FORM_ELEMENT = "file";
 
   /**
    * Name of the form element to upload component archives.

@@ -208,5 +208,9 @@
     <property name="remotestorage.s3.accesskeyid" value="" />
     <property name="remotestorage.s3.secretaccesskey" value="" />
 
+    <!-- Redis Cache Provider -->
+    <property name="cache.provider" value="" />
+    <property name="cache.redis.host" value="localhost:6379" />
+
   </system-properties>
 </appengine-web-app>

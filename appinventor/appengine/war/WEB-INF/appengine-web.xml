@@ -208,9 +208,19 @@
     <property name="remotestorage.s3.accesskeyid" value="" />
     <property name="remotestorage.s3.secretaccesskey" value="" />
 
-    <!-- Redis Cache Provider -->
+    <!-- Cache Service Provider -->
     <property name="cache.provider" value="" />
     <property name="cache.redis.host" value="localhost:6379" />
+
+    <!-- File System Service Provider -->
+    <property name="filesystem.provider" value="" />
+    <!-- S3 Compatible Storage Configuration -->
+    <property name="filesystem.s3.endpoint" value="" />
+    <property name="filesystem.s3.endpointpathstyle" value="" />
+    <property name="filesystem.s3.bucketname" value="" />
+    <property name="filesystem.s3.bucketregion" value="" />
+    <property name="filesystem.s3.accesskeyid" value="" />
+    <property name="filesystem.s3.secretaccesskey" value="" />
 
   </system-properties>
 </appengine-web-app>

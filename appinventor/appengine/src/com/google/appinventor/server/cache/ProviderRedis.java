@@ -15,7 +15,7 @@ import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
-public final class RedisProvider extends CacheService {
+public final class ProviderRedis extends CacheService {
   private static final Flag<String> REDIS_HOST = Flag.createFlag("cache.redis.host", "localhost:6379");
 
   private static final RedisCodec<String, Object> REDIS_CODEC = new RedisCodec<>() {
@@ -54,7 +54,7 @@ public final class RedisProvider extends CacheService {
   private final RedisCommands<String, Object> sync;
   private final RedisAsyncCommands<String, Object> async;
 
-  public RedisProvider() {
+  public ProviderRedis() {
     // TODO: This works fine for single instance Redis, but doesn't for cluster based ones
     final RedisClient client = RedisClient.create("redis://" + REDIS_HOST.get());
     final StatefulRedisConnection<String, Object> connection = client.connect(REDIS_CODEC);

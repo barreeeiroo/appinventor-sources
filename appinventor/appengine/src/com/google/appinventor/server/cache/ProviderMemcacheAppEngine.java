@@ -7,10 +7,10 @@ import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 import java.util.logging.Level;
 
-public final class MemcacheAppEngineProvider extends CacheService {
+public final class ProviderMemcacheAppEngine extends CacheService {
   private final MemcacheService memcache;
 
-  public MemcacheAppEngineProvider() {
+  public ProviderMemcacheAppEngine() {
     this.memcache = MemcacheServiceFactory.getMemcacheService();
     memcache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
   }

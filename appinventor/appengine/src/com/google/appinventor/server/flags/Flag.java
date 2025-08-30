@@ -6,16 +6,25 @@
 
 package com.google.appinventor.server.flags;
 
+import com.google.appinventor.server.PropertiesLoader;
+
 /**
  * A flag associated with a system property.
  *
- * Values for flags are specified in the &lt;system-properties&gt; section of appengine-web.xml.
+ * Values for flags are specified in the &lt;system-properties&gt; section of appengine-web.xml
+ * or loaded from tomcat.properties file for Tomcat deployments.
  *
  * @param <T> The flag value type.
  *
  * @author lizlooney@google.com (Liz Looney)
  */
 public abstract class Flag<T> {
+
+  // Static block to ensure properties are loaded before any Flag is used
+  static {
+    PropertiesLoader.ensurePropertiesLoaded();
+  }
+
   private final String name;
   private final T defaultValue;
   private T cachedValue = null;

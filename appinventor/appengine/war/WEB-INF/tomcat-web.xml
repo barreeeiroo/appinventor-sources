@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<web-app
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://java.sun.com/xml/ns/javaee"
+  xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+  http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
+
+  <filter>
+    <filter-name>odeAuthFilter</filter-name>
+    <filter-class>com.google.appinventor.server.OdeAuthFilter</filter-class>
+  </filter>
+
+  <!-- Security constraints removed - Tomcat will handle authentication differently -->
+
+  <!-- Servlets -->
+
+  <!-- Generate Login Page -->
+  <servlet>
+    <servlet-name>LoginServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.LoginServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LoginServlet</servlet-name>
+    <url-pattern>/login/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- REST interface Servlet -->
+  <servlet>
+    <servlet-name>RestServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.RestServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>RestServlet</servlet-name>
+    <url-pattern>/rest/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- Nonce based APK download -->
+  <servlet>
+    <servlet-name>buildOutputServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.BuildOutputServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>buildOutputServlet</servlet-name>
+    <url-pattern>/b/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- download -->
+  <servlet>
+    <servlet-name>downloadServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.DownloadServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>downloadServlet</servlet-name>
+    <url-pattern>/ode/download/*</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>downloadServlet</servlet-name>
+  </filter-mapping>
+
+  <!-- projects -->
+  <servlet>
+    <servlet-name>projectService</servlet-name>
+    <servlet-class>com.google.appinventor.server.ProjectServiceImpl</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>projectService</servlet-name>
+    <url-pattern>/ode/projects</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>projectService</servlet-name>
+  </filter-mapping>
+
+  <!-- upload -->
+  <servlet>
+    <servlet-name>uploadServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.UploadServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>uploadServlet</servlet-name>
+    <url-pattern>/ode/upload/*</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>uploadServlet</servlet-name>
+  </filter-mapping>
+
+  <!-- admininfo -->
+  <servlet>
+    <servlet-name>adminInfoService</servlet-name>
+    <servlet-class>com.google.appinventor.server.AdminInfoServiceImpl</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminInfoService</servlet-name>
+    <url-pattern>/ode/admininfo</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>adminInfoService</servlet-name>
+  </filter-mapping>
+
+  <!-- userinfo -->
+  <servlet>
+    <servlet-name>userInfoService</servlet-name>
+    <servlet-class>com.google.appinventor.server.UserInfoServiceImpl</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>userInfoService</servlet-name>
+    <url-pattern>/ode/userinfo</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>userInfoService</servlet-name>
+  </filter-mapping>
+
+  <!-- TokenAuth -->
+  <servlet>
+    <servlet-name>tokenAuthService</servlet-name>
+    <servlet-class>com.google.appinventor.server.tokenauth.TokenAuthServiceImpl</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>tokenAuthService</servlet-name>
+    <url-pattern>/ode/tokenauth</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>tokenAuthService</servlet-name>
+  </filter-mapping>
+
+  <!-- accept tos -->
+  <servlet>
+    <servlet-name>tosServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.TosServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>tosServlet</servlet-name>
+    <url-pattern>/ode/accept_tos</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>tosServlet</servlet-name>
+  </filter-mapping>
+
+  <!-- feedback -->
+  <servlet>
+    <servlet-name>feedbackServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.FeedbackServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>feedbackServlet</servlet-name>
+    <url-pattern>/ode/feedback</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>feedbackServlet</servlet-name>
+  </filter-mapping>
+
+  <!-- logout -->
+  <servlet>
+    <servlet-name>logoutServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.LogoutServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>logoutServlet</servlet-name>
+    <url-pattern>/ode/_logout</url-pattern>
+  </servlet-mapping>
+
+  <!-- receivebuild -->
+  <servlet>
+    <servlet-name>receiveBuildServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.ReceiveBuildServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>receiveBuildServlet</servlet-name>
+    <url-pattern>/ode2/receivebuild/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- default Firebase authentication -->
+  <servlet>
+    <servlet-name>firebaseAuthService</servlet-name>
+    <servlet-class>com.google.appinventor.server.components.FirebaseAuthServiceImpl</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>firebaseAuthService</servlet-name>
+    <url-pattern>/ode/firebase_auth</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>firebaseAuthService</servlet-name>
+  </filter-mapping>
+
+  <!-- components -->
+  <servlet>
+    <servlet-name>componentService</servlet-name>
+    <servlet-class>com.google.appinventor.server.ComponentServiceImpl</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>componentService</servlet-name>
+    <url-pattern>/ode/components</url-pattern>
+  </servlet-mapping>
+  <filter-mapping>
+    <filter-name>odeAuthFilter</filter-name>
+    <servlet-name>componentService</servlet-name>
+  </filter-mapping>
+
+  <!-- Welcome file list -->
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+
+  <!-- Session configuration for Tomcat -->
+  <session-config>
+    <session-timeout>30</session-timeout>
+  </session-config>
+
+</web-app>

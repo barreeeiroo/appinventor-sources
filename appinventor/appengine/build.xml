@@ -765,4 +765,111 @@
     </ai.dojunit>
   </target>
 
+  <!-- =====================================================================
+       Tomcat deployment targets
+       ===================================================================== -->
+
+  <!-- Copy Tomcat-specific configuration files -->
+  <target name="TomcatConfig"
+          description="Copy Tomcat-specific configuration files"
+          depends="CopyToBuildWarPost">
+    <copy file="war/WEB-INF/tomcat-web.xml" 
+          tofile="${build.war.dir}/WEB-INF/web.xml" 
+          overwrite="true"/>
+    <copy file="war/WEB-INF/tomcat.properties" 
+          todir="${build.war.dir}/WEB-INF/"/>
+    <!-- Also copy tomcat.properties to classpath so it can be loaded early -->
+    <copy file="war/WEB-INF/tomcat.properties" 
+          todir="${build.war.dir}/WEB-INF/classes/"/>
+  </target>
+
+  <!-- Build WAR file for Tomcat deployment -->
+  <target name="TomcatWar"
+          description="Build WAR file for Tomcat deployment"
+          depends="AiServerLib,AiClientLib,AiRebindLib,YaClientApp,CopyToBuildWarPost,Keystore,TomcatWarLibs,InstallAuthKey,TomcatConfig">
+    <war destfile="${build.dir}/appinventor-tomcat.war" 
+         webxml="${build.war.dir}/WEB-INF/web.xml">
+      <fileset dir="${build.war.dir}">
+        <exclude name="WEB-INF/appengine-web.xml"/>
+      </fileset>
+    </war>
+    <echo message="Tomcat WAR file created: ${build.dir}/appinventor-tomcat.war"/>
+  </target>
+
+  <!-- Copy jars needed for Tomcat deployment (excluding App Engine specific ones) -->
+  <target name="TomcatWarLibs"
+          description="Copy libs to build/war/WEB-INF/lib for Tomcat"
+          depends="init,MakeWarLibsDir,common_CommonUtils,common_CommonVersion,components_CommonConstants">
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${build.dir}/common/CommonUtils.jar"/>
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${build.dir}/common/CommonVersion.jar"/>
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${build.dir}/components/CommonConstants.jar"/>
+    
+    <!-- external libs (excluding App Engine specific) -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/commons-fileupload/commons-fileupload-1.2.2.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/commons-io/commons-io-2.0.1.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/findbugs/jsr305.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/guava/guava-20.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/firebase/firebase-token-generator-2.0.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/commons-codec/commons-codec-1.7.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/json/json.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/keyczar/keyczar-0.66-080111-java-1.6.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/objectify-3.1/objectify-3.1.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gson/gson-2.1.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/log4j/log4j-1.2.16.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/commons-lang3/commons-lang3-3.10.jar" />
+
+    <!-- Bouncycastle for keystore generation -->
+    <copy todir="${build.war.dir}/WEB-INF/lib">
+      <fileset dir="${lib.dir}/bouncycastle">
+        <include name="*-166.jar"/>
+      </fileset>
+    </copy>
+
+    <!-- GCS Libs -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/appengine-gcs-client-0.6.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/jackson-core-2.1.3.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/google-api-client-1.22.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/google-api-client-jackson2-1.20.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/google-http-client-1.22.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/google-http-client-jackson-1.22.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/google-http-client-jackson2-1.22.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/google-api-services-storage-v1-rev91-1.22.0.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/httpclient-4.0.1.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/gcs/joda-time-2.6.jar" />
+    
+    <!-- Standard servlet APIs for Tomcat -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet-deps.jar" />
+    
+    <!-- Protocol Buffers -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/protobuf/protobuf-java-4.28.1.jar" />
+    
+    <!-- OWASP -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/owasp/owasp-java-html-sanitizer-20160628.1.jar" />
+    
+    <!-- ddlist for manipulating iOS provisioning profiles -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/dd-plist/dd-plist.jar" />
+    
+    <!-- Alternative providers for non-App Engine deployment -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/io-lettuce/lettuce-core-6.7.1.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/awssdk/dynamodb-enhanced-2.32.18.jar" />
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${lib.dir}/awssdk/s3-2.32.18.jar" />
+    
+    <!-- Note: App Engine specific JARs are excluded:
+         - appengine-api-1.0-sdk-2.0.19.jar
+         - geronimo-jpa_3.0_spec-1.1.1.jar
+    -->
+
+    <!-- Added Libs -->
+    <!-- javax.servlet -->
+    <copy todir="${build.war.dir}/WEB-INF/lib" file="${gwt.sdk}/gwt-user.jar" />
+  </target>
+
+  <!-- Clean Tomcat specific build artifacts -->
+  <target name="TomcatClean"
+          description="Clean Tomcat build artifacts">
+    <delete file="${build.dir}/appinventor-tomcat.war"/>
+    <delete file="${build.war.dir}/WEB-INF/tomcat.properties"/>
+  </target>
+
 </project>

@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -38,7 +39,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.keyczar.Crypter;
 import org.keyczar.exceptions.KeyczarException;
 
+import org.keyczar.interfaces.KeyczarReader;
 import org.keyczar.util.Base64Coder;
+
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -55,6 +62,7 @@ public class OdeAuthFilter implements Filter {
 
   private static Crypter crypter = null; // accessed through getCrypter only
   private static final Object crypterSync = new Object();
+  private static ServletContext servletContext = null;
 
   private final StorageIo storageIo = StorageIoInstanceHolder.getInstance();
 
@@ -247,7 +255,14 @@ public class OdeAuthFilter implements Filter {
    * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
    */
   @Override
-  public void init(FilterConfig arg0) throws ServletException {
+  public void init(FilterConfig filterConfig) throws ServletException {
+    servletContext = filterConfig.getServletContext();
+
+    try {
+      // We force to recreate it, now that we are aware of the Servlet context
+      getCrypter(true);
+    } catch (KeyczarException ignored) {
+    }
   }
 
   // --- Support Routines for encrypted cookies --- //
@@ -374,12 +389,91 @@ public class OdeAuthFilter implements Filter {
   }
 
   private static Crypter getCrypter() throws KeyczarException {
+    return getCrypter(false);
+  }
+
+  private static Crypter getCrypter(final boolean recreate) throws KeyczarException {
+    if (crypter != null && !recreate) {
+      return crypter;
+    }
+
     synchronized(crypterSync) {
-      if (crypter != null) {
+      if (crypter != null && !recreate) {
         return crypter;
+      }
+
+      // Try ServletContext-based loading first (for Tomcat/virtual hosts)
+      if (servletContext != null) {
+        try {
+          crypter = new Crypter(new ServletContextKeyReader(servletContext));
+          LOG.info("Successfully loaded crypter using ServletContext");
+          return crypter;
+        } catch (Exception e) {
+          LOG.log(Level.WARNING, "Failed to load crypter via ServletContext, falling back to filesystem", e);
+        }
+      }
+
+      // Fallback to filesystem-based loading
+      crypter = new Crypter(sessionKeyFile.get());
+      return crypter;
+    }
+  }
+
+  /**
+   * KeyczarReader implementation that loads keys from ServletContext resources
+   */
+  private static class ServletContextKeyReader implements KeyczarReader {
+    private final ServletContext context;
+    private final String keyPath;
+    
+    public ServletContextKeyReader(ServletContext context) {
+      this.context = context;
+      String rawPath = sessionKeyFile.get();
+      
+      // If it's an absolute filesystem path (Unix or Windows), convert to webapp-relative
+      if (rawPath.startsWith("/") || (rawPath.length() > 1 && rawPath.charAt(1) == ':')) {
+        // Extract the webapp-relative portion (everything after the last WEB-INF)
+        int webInfIndex = rawPath.lastIndexOf("WEB-INF");
+        if (webInfIndex >= 0) {
+          this.keyPath = "/" + rawPath.substring(webInfIndex);
+        } else {
+          // Fallback to default
+          this.keyPath = "/WEB-INF/authkey";
+        }
       } else {
-        crypter = new Crypter(sessionKeyFile.get());
-        return crypter;
+        // Already webapp-relative, ensure leading slash
+        this.keyPath = rawPath.startsWith("/") ? rawPath : "/" + rawPath;
+      }
+    }
+    
+    @Override
+    public String getMetadata() throws KeyczarException {
+      return readResource(keyPath + "/meta");
+    }
+    
+    @Override
+    public String getKey(int version) throws KeyczarException {
+      return readResource(keyPath + "/" + version);
+    }
+
+    private String readResource(String path) throws KeyczarException {
+      try {
+        InputStream is = context.getResourceAsStream(path);
+        if (is == null) {
+          throw new KeyczarException("Resource not found: " + path);
+        }
+        
+        try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(is, StandardCharsets.UTF_8))) {
+          StringBuilder content = new StringBuilder();
+          String line;
+          while ((line = reader.readLine()) != null) {
+            content.append(line);
+          }
+          return content.toString();
+        }
+      } catch (IOException e) {
+        throw new KeyczarException("Failed to read resource: " + path, e);
       }
     }
   }

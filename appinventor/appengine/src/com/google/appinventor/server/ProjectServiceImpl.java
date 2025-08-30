@@ -97,9 +97,26 @@ public class ProjectServiceImpl extends OdeRemoteServiceServlet implements Proje
     //   System.out.println("newProjectFromTemplate = " +  host + pathToZip);
     UserProject userProject = null;
     try {
-      FileInputStream fis = new FileInputStream(pathToZip);
+      java.io.InputStream inputStream = null;
+      
+      // Try ServletContext-based access first (for Tomcat/virtual hosts)
+      try {
+        String resourcePath = pathToZip.startsWith("/") ? pathToZip : "/" + pathToZip;
+        inputStream = getServletContext().getResourceAsStream(resourcePath);
+        if (inputStream != null) {
+          LOG.info("Successfully loaded template zip via ServletContext: " + resourcePath);
+        }
+      } catch (Exception e) {
+        LOG.log(Level.WARNING, "Failed to load template zip via ServletContext: " + pathToZip, e);
+      }
+      
+      // Fallback to filesystem-based loading
+      if (inputStream == null) {
+        inputStream = new FileInputStream(pathToZip);
+      }
+      
       FileImporter fileImporter = new FileImporterImpl();
-      userProject = fileImporter.importProject(userInfoProvider.getUserId(), projectName, fis);
+      userProject = fileImporter.importProject(userInfoProvider.getUserId(), projectName, inputStream);
     } catch (IOException e) {
       LOG.log(Level.SEVERE, "I/O Error importing from template project", e);
     } catch (FileImporterException e) {
@@ -157,8 +174,21 @@ public class ProjectServiceImpl extends OdeRemoteServiceServlet implements Proje
   @Override
   public String retrieveTemplateData(String pathToTemplatesDir) {
     String json = "[";
+    
+    // Try ServletContext-based access first (for Tomcat/virtual hosts)
+    try {
+      return retrieveTemplateDataFromServletContext(pathToTemplatesDir);
+    } catch (Exception e) {
+      LOG.log(Level.WARNING, "Failed to load template data via ServletContext, falling back to filesystem", e);
+    }
+    
+    // Fallback to filesystem-based loading
     File templatesRepository = new File(pathToTemplatesDir);
     File templateFolder[] = templatesRepository.listFiles();
+    if (templateFolder == null) {
+      LOG.warning("Templates directory not found or not accessible: " + pathToTemplatesDir);
+      return json + "]";
+    }
     for (File file: templateFolder) {
       String templateName = file.getName();
       if (file.isDirectory()) {  // Should be a template folder
@@ -178,6 +208,43 @@ public class ProjectServiceImpl extends OdeRemoteServiceServlet implements Proje
         }
       }
     }
+    return json + "]";
+  }
+
+  /**
+   * ServletContext-based template data retrieval for Tomcat/virtual host deployments
+   */
+  private String retrieveTemplateDataFromServletContext(String pathToTemplatesDir) throws Exception {
+    String json = "[";
+    String templatePath = pathToTemplatesDir.startsWith("/") ? pathToTemplatesDir : "/" + pathToTemplatesDir;
+    
+    javax.servlet.ServletContext context = getServletContext();
+    java.util.Set<String> templatePaths = context.getResourcePaths(templatePath);
+    
+    if (templatePaths == null) {
+      LOG.warning("No template directories found at: " + templatePath);
+      return json + "]";
+    }
+    
+    for (String templateDir : templatePaths) {
+      if (templateDir.endsWith("/")) { // It's a directory
+        String templateName = templateDir.substring(templateDir.lastIndexOf('/', templateDir.length() - 2) + 1, templateDir.length() - 1);
+        String jsonFile = templateDir + templateName + ".json";
+        
+        try (java.io.InputStream is = context.getResourceAsStream(jsonFile)) {
+          if (is != null) {
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8))) {
+              String line = reader.readLine();
+              if (line != null) {
+                json += line + ", ";
+              }
+            }
+          }
+        }
+      }
+    }
+    
     return json + "]";
   }
 

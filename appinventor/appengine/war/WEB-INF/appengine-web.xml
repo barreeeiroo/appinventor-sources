@@ -197,5 +197,16 @@
     <!-- https://example.com/something. -->
     <property name="ode.base" value="" />
 
+    <!-- Realm Migration Configuration -->
+    <!-- Source realm URL for one-way migration (Realm A -> Realm B) -->
+    <!-- Only Realm B should set this to point to Realm A -->
+    <!-- Realm A should leave this empty (it doesn't migrate FROM anywhere) -->
+    <property name="migration.source.realm" value="" />
+    
+    <!-- Migration authentication token - must match between source and destination -->
+    <!-- This token is required in the X-Migration-Token header for all migration API calls -->
+    <!-- Use a strong, randomly generated token (e.g., UUID) -->
+    <property name="migration.token" value="" />
+
   </system-properties>
 </appengine-web-app>

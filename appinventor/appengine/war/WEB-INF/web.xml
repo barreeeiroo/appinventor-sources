@@ -245,4 +245,14 @@
     <servlet-name>componentService</servlet-name>
   </filter-mapping>
 
+  <!-- realm migration -->
+  <servlet>
+    <servlet-name>realmMigrationServlet</servlet-name>
+    <servlet-class>com.google.appinventor.server.RealmMigrationServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>realmMigrationServlet</servlet-name>
+    <url-pattern>/migrate/*</url-pattern>
+  </servlet-mapping>
+
 </web-app>

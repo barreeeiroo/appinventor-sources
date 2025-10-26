@@ -94,6 +94,18 @@ public class LoginServlet extends HttpServlet {
     loginListeners.add(listener);
   }
 
+  /**
+   * Trigger migration check for newly logged in user (non-blocking, async).
+   */
+  private void triggerMigrationCheck(String userId) {
+    try {
+      RealmMigrationService.getInstance().checkAndInitiateMigrationAsync(userId);
+    } catch (Exception e) {
+      // Log migration check errors but don't block user login
+      LOG.warning("Error checking migration for user " + userId + ": " + e.getMessage());
+    }
+  }
+
   public static void removeLoginListener(LoginListener listener) {
     loginListeners.remove(listener);
   }
@@ -154,6 +166,8 @@ public class LoginServlet extends HttpServlet {
       if (userService.isUserAdmin()) { // If we are a developer, we are always an admin
         userInfo.setIsAdmin(true);
       }
+
+      triggerMigrationCheck(user.getUserId()); // Trigger migration check for newly logged in user
 
       String newCookie = userInfo.buildCookie(false);
       if (DEBUG) {
@@ -237,6 +251,9 @@ public class LoginServlet extends HttpServlet {
       User user = storageIo.getUserFromEmail(data.email);
       userInfo = new OdeAuthFilter.UserInfo(); // Create new userInfo object
       userInfo.setUserId(user.getUserId()); // This effectively logs us in!
+      
+      triggerMigrationCheck(user.getUserId()); // Trigger migration check for newly logged in user
+      
       out = setCookieOutput(userInfo, resp);
 //      req.getSession().setAttribute("userid", user.getUserId()); // This effectively logs us in!
       out.println("<html><head><title>Set Your Password</title>\n");
@@ -303,6 +320,7 @@ public class LoginServlet extends HttpServlet {
       if (token.getCommand() == TokenProto.token.CommandType.SSOLOGIN) {
         userInfo.setReadOnly(token.getReadOnly());
         userInfo.setUserId(token.getUuid());
+        triggerMigrationCheck(token.getUuid()); // Trigger migration check for newly logged in user
       } else if (token.getCommand() == TokenProto.token.CommandType.SSOLOGIN2) { // SSOLOGIN2
         String email = token.getName();
         if (email == null || email.isEmpty()) {
@@ -311,6 +329,7 @@ public class LoginServlet extends HttpServlet {
         }
         User user = storageIo.getUserFromEmail(email);
         userInfo.setUserId(user.getUserId());
+        triggerMigrationCheck(user.getUserId()); // Trigger migration check for newly logged in user
       } else {                  // SSOLOGIN3
         String uuid = token.getUuid();
         String email = token.getName();
@@ -320,6 +339,7 @@ public class LoginServlet extends HttpServlet {
         }
         User user = storageIo.getUser(uuid, email);
         userInfo.setUserId(user.getUserId());
+        triggerMigrationCheck(user.getUserId()); // Trigger migration check for newly logged in user
         for (LoginListener listener : loginListeners) {
           listener.onLogin(user, token);
         }
@@ -486,6 +506,9 @@ public class LoginServlet extends HttpServlet {
     }
     userInfo.setUserId(user.getUserId());
     userInfo.setIsAdmin(user.getIsAdmin());
+    
+    triggerMigrationCheck(user.getUserId()); // Trigger migration check for newly logged in user
+    
     String newCookie = userInfo.buildCookie(false);
     if (DEBUG) {
       LOG.info("newCookie = " + newCookie);

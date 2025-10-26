@@ -32,6 +32,8 @@ import com.google.appinventor.server.storage.StoredData.Backpack;
 import com.google.appinventor.server.storage.StoredData.CorruptionRecord;
 import com.google.appinventor.server.storage.StoredData.FeedbackData;
 import com.google.appinventor.server.storage.StoredData.FileData;
+import com.google.appinventor.server.storage.StoredData.MigrationData;
+import com.google.appinventor.server.storage.StoredData.MigrationTrackingData;
 import com.google.appinventor.server.storage.StoredData.MotdData;
 import com.google.appinventor.server.storage.StoredData.NonceData;
 import com.google.appinventor.server.storage.StoredData.ProjectData;
@@ -138,6 +140,7 @@ public class ObjectifyStorageIo implements StorageIo {
 
   private static final String BUILD_STATUS_CACHE_KEY_PREFIX = "40bae275-070f-478b-9a5f-d50361809b99";
   private static final String PROJECT_OWNER_CACHE_KEY_PREFIX = "cf452c52-839a-48e2-a3fc-ef77c87e09c2";
+  private static final String MIGRATION_STATUS_CACHE_KEY_PREFIX = "73847d80-0050-4298-9b8c-d2912324384d";
 
   private static final long TWENTYFOURHOURS = 24*3600*1000; // 24 hours in milliseconds
 
@@ -209,6 +212,8 @@ public class ObjectifyStorageIo implements StorageIo {
     ObjectifyService.register(Backpack.class);
     ObjectifyService.register(AllowedTutorialUrls.class);
     ObjectifyService.register(AllowedIosExtensions.class);
+    ObjectifyService.register(MigrationData.class);
+    ObjectifyService.register(MigrationTrackingData.class);
 
     // Learn GCS Bucket from App Configuration or App Engine Default
     // gcsBucket is where project storage goes
@@ -2830,6 +2835,116 @@ public class ObjectifyStorageIo implements StorageIo {
       throw CrashReport.createAndLogError(LOG, null, null, e);
     }
     return result.t;
+  }
+
+  // Migration data storage methods
+
+  /**
+   * Load migration data for a user (Realm B - destination)
+   */
+  public MigrationData loadMigrationData(final String userId) {
+    final Result<MigrationData> result = new Result<>();
+    try {
+      runJobWithRetries(new JobRetryHelper() {
+        @Override
+        public void run(Objectify datastore) {
+          result.t = datastore.find(MigrationData.class, userId);
+        }
+      }, false);
+    } catch (ObjectifyException e) {
+      throw CrashReport.createAndLogError(LOG, null, collectUserErrorInfo(userId), e);
+    }
+    return result.t;
+  }
+
+  /**
+   * Store migration data for a user (Realm B - destination)
+   */
+  public void storeMigrationData(final MigrationData migrationData) {
+    // Cache key for migration status
+    final String migrationCacheKey = MIGRATION_STATUS_CACHE_KEY_PREFIX + "|" + migrationData.userId;
+
+    try {
+      runJobWithRetries(new JobRetryHelper() {
+        @Override
+        public void run(Objectify datastore) {
+          datastore.put(migrationData);
+          memcache.put(migrationCacheKey, migrationData.status);
+        }
+      }, true);
+    } catch (ObjectifyException e) {
+      throw CrashReport.createAndLogError(LOG, null, collectUserErrorInfo(migrationData.userId), e);
+    }
+  }
+
+  /**
+   * Load migration tracking data for a user (Realm A - source)
+   */
+  public MigrationTrackingData loadMigrationTrackingData(final String userId) {
+    final Result<MigrationTrackingData> result = new Result<>();
+    try {
+      runJobWithRetries(new JobRetryHelper() {
+        @Override
+        public void run(Objectify datastore) {
+          result.t = datastore.find(MigrationTrackingData.class, userId);
+        }
+      }, false);
+    } catch (ObjectifyException e) {
+      throw CrashReport.createAndLogError(LOG, null, collectUserErrorInfo(userId), e);
+    }
+    return result.t;
+  }
+
+  /**
+   * Store migration tracking data for a user (Realm A - source)
+   */
+  public void storeMigrationTrackingData(final MigrationTrackingData trackingData) {
+    try {
+      runJobWithRetries(new JobRetryHelper() {
+        @Override
+        public void run(Objectify datastore) {
+          datastore.put(trackingData);
+        }
+      }, true);
+    } catch (ObjectifyException e) {
+      throw CrashReport.createAndLogError(LOG, null, collectUserErrorInfo(trackingData.userId), e);
+    }
+  }
+
+  /**
+   * Check if migration is needed for a user (optimized with cache-first lookup).
+   */
+  public boolean isMigrationNeeded(String userId) {
+    // Cache key for migration status
+    final String migrationCacheKey = MIGRATION_STATUS_CACHE_KEY_PREFIX + "|" + userId;
+    
+    try {
+      // First check memcache for fast lookup
+      String cachedStatus = (String) memcache.get(migrationCacheKey);
+      if (cachedStatus != null) {
+        // Cache hit - return based on cached status
+        return !"COMPLETED".equals(cachedStatus);
+      }
+      
+      // Cache miss - check datastore
+      MigrationData migrationData = loadMigrationData(userId);
+      String status;
+      
+      if (migrationData != null) {
+        status = migrationData.status;
+      } else {
+        // No migration record means migration is still needed (unless user doesn't exist in source)
+        status = "NOT_STARTED";
+      }
+
+      // Return true if migration is needed (not completed)
+      return !"COMPLETED".equals(status);
+      
+    } catch (Exception e) {
+      LOG.warning("Error checking migration status for user " + userId + ": " + e.getMessage());
+      // On error, assume migration is needed to be safe
+      return true;
+    }
   }
 
   /*

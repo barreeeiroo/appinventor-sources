@@ -328,6 +328,51 @@ public class StoredData {
     String allowedExtensions;
   }
 
+  // Migration data for tracking migration progress in Realm B (destination)
+  @Unindexed
+  public static final class MigrationData {
+    // User being migrated (Realm B's user ID)
+    @Id public String userId;
+    
+    // Source realm's user ID (different from Realm B's user ID)
+    public String sourceUserId;
+    
+    // Migration timing
+    @Indexed public Date startTime;
+    public Date completionTime;
+    
+    // Migration status: IN_PROGRESS, COMPLETED, FAILED
+    public String status;
+    
+    // Progress tracking
+    public boolean userDataMigrated;
+    public boolean userFilesMigrated;
+    public int totalUserFiles;
+    public int migratedUserFiles;
+    public int totalProjects;
+    public int migratedProjects;
+    public int totalFiles;
+    public int migratedFiles;
+    
+    // Error handling
+    public String lastError;
+    public int retryCount;
+  }
+
+  // Migration tracking data for Realm A (source) to track migrated users
+  @Unindexed
+  public static final class MigrationTrackingData {
+    // User that was migrated
+    @Id public String userId;
+    
+    // Migration completion info
+    @Indexed public Date migrationDate;
+    
+    // Cleanup flags
+    public boolean dataCleaned;
+    public Date cleanupDate;
+  }
+
   public static final class ProjectNotFoundException extends IOException {
     ProjectNotFoundException(String message) {
       super(message);

@@ -673,6 +673,48 @@ public interface StorageIo {
 
   String getIosExtensionsConfig();
 
+  // Migration methods
+
+  /**
+   * Load migration data for a user (Realm B - destination)
+   * 
+   * @param userId unique user id
+   * @return migration data or null if not found
+   */
+  StoredData.MigrationData loadMigrationData(String userId);
+
+  /**
+   * Store migration data for a user (Realm B - destination)
+   * 
+   * @param migrationData migration data to store
+   */
+  void storeMigrationData(StoredData.MigrationData migrationData);
+
+  /**
+   * Load migration tracking data for a user (Realm A - source)
+   * 
+   * @param userId unique user id
+   * @return migration tracking data or null if not found
+   */
+  StoredData.MigrationTrackingData loadMigrationTrackingData(String userId);
+
+  /**
+   * Store migration tracking data for a user (Realm A - source)
+   * 
+   * @param trackingData migration tracking data to store
+   */
+  void storeMigrationTrackingData(StoredData.MigrationTrackingData trackingData);
+
+  /**
+   * Check if migration is needed for a user (optimized with cache-first lookup).
+   * Returns true if migration is needed, false if already completed or not needed.
+   * Uses memcache for fast lookups to reduce latency for frequent checks.
+   * 
+   * @param userId unique user id
+   * @return true if migration is needed, false otherwise
+   */
+  boolean isMigrationNeeded(String userId);
+
 }
 
 

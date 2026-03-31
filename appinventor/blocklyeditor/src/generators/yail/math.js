@@ -478,6 +478,35 @@ AI.Yail.forBlock['math_format_as_decimal'] = function(block, generator) {
   return [ code, AI.Yail.ORDER_ATOMIC ];
 };
 
+AI.Yail.forBlock['math_number_property'] = function(block, generator) {
+  var mode = block.getFieldValue('OP');
+  var tuple = AI.Yail.forBlock['math_number_property'].OPERATORS[mode];
+  var operator1 = tuple[0];
+  var operator2 = tuple[1];
+  var order = tuple[2];
+  var argument = generator.valueToCode(block, 'NUMBER', order) || 0;
+  var code = AI.Yail.YAIL_CALL_YAIL_PRIMITIVE + operator1
+      + AI.Yail.YAIL_SPACER;
+  code = code + AI.Yail.YAIL_OPEN_COMBINATION
+      + AI.Yail.YAIL_LIST_CONSTRUCTOR + AI.Yail.YAIL_SPACER
+      + argument + AI.Yail.YAIL_CLOSE_COMBINATION;
+  code = code + AI.Yail.YAIL_SPACER + AI.Yail.YAIL_QUOTE
+      + AI.Yail.YAIL_OPEN_COMBINATION + "number"
+      + AI.Yail.YAIL_CLOSE_COMBINATION + AI.Yail.YAIL_SPACER;
+  code = code + AI.Yail.YAIL_DOUBLE_QUOTE + operator2
+      + AI.Yail.YAIL_DOUBLE_QUOTE + AI.Yail.YAIL_CLOSE_COMBINATION;
+  return [code, AI.Yail.ORDER_ATOMIC];
+};
+
+AI.Yail.forBlock['math_number_property'].OPERATORS = {
+  EVEN: ['is-even?', 'is even?', AI.Yail.ORDER_NONE],
+  ODD: ['is-odd?', 'is odd?', AI.Yail.ORDER_NONE],
+  PRIME: ['is-prime?', 'is prime?', AI.Yail.ORDER_NONE],
+  POSITIVE: ['is-positive?', 'is positive?', AI.Yail.ORDER_NONE],
+  NEGATIVE: ['is-negative?', 'is negative?', AI.Yail.ORDER_NONE],
+  WHOLE: ['is-whole?', 'is whole?', AI.Yail.ORDER_NONE]
+};
+
 AI.Yail.forBlock['math_is_a_number'] = function(block, generator) {
   var mode = block.getFieldValue('OP');
   var tuple = AI.Yail.forBlock['math_is_a_number'].OPERATORS[mode];

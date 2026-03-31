@@ -1316,6 +1316,94 @@ Blockly.Blocks['math_format_as_decimal'] = {
   typeblock: [{translatedName: Blockly.Msg.LANG_MATH_FORMAT_AS_DECIMAL_TITLE}]
 };
 
+Blockly.Blocks['math_number_property'] = {
+  category: 'Math',
+  helpUrl: function () {
+    var mode = this.getFieldValue('OP');
+    return Blockly.Blocks.math_number_property.HELPURLS()[mode];
+  },
+  init: function () {
+    this.setColour(Blockly.MATH_CATEGORY_HUE);
+    this.setOutput(true, AI.BlockUtils.YailTypeToBlocklyType("boolean", AI.BlockUtils.OUTPUT));
+    this.appendValueInput('NUMBER')
+        .setCheck(AI.BlockUtils.YailTypeToBlocklyType("number", AI.BlockUtils.INPUT))
+        .appendField(new Blockly.FieldDropdown(Blockly.Blocks.math_number_property.OPERATORS()), 'OP');
+    var thisBlock = this;
+    this.setTooltip(function () {
+      var mode = thisBlock.getFieldValue('OP');
+      return Blockly.Blocks.math_number_property.TOOLTIPS()[mode];
+    });
+  },
+  typeblock: [{
+    translatedName: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_EVEN,
+    dropDown: {
+      titleName: 'OP',
+      value: 'EVEN'
+    }
+  }, {
+    translatedName: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_ODD,
+    dropDown: {
+      titleName: 'OP',
+      value: 'ODD'
+    }
+  }, {
+    translatedName: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_PRIME,
+    dropDown: {
+      titleName: 'OP',
+      value: 'PRIME'
+    }
+  }, {
+    translatedName: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_POSITIVE,
+    dropDown: {
+      titleName: 'OP',
+      value: 'POSITIVE'
+    }
+  }, {
+    translatedName: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_NEGATIVE,
+    dropDown: {
+      titleName: 'OP',
+      value: 'NEGATIVE'
+    }
+  }, {
+    translatedName: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_WHOLE,
+    dropDown: {
+      titleName: 'OP',
+      value: 'WHOLE'
+    }
+  }]
+};
+
+Blockly.Blocks.math_number_property.OPERATORS = function () {
+  return [[Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_EVEN, 'EVEN'],
+    [Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_ODD, 'ODD'],
+    [Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_PRIME, 'PRIME'],
+    [Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_POSITIVE, 'POSITIVE'],
+    [Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_NEGATIVE, 'NEGATIVE'],
+    [Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_WHOLE, 'WHOLE']];
+};
+
+Blockly.Blocks.math_number_property.TOOLTIPS = function () {
+  return {
+    EVEN: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_TOOLTIP_EVEN,
+    ODD: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_TOOLTIP_ODD,
+    PRIME: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_TOOLTIP_PRIME,
+    POSITIVE: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_TOOLTIP_POSITIVE,
+    NEGATIVE: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_TOOLTIP_NEGATIVE,
+    WHOLE: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_TOOLTIP_WHOLE
+  }
+};
+
+Blockly.Blocks.math_number_property.HELPURLS = function () {
+  return {
+    EVEN: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_HELPURL_EVEN,
+    ODD: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_HELPURL_ODD,
+    PRIME: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_HELPURL_PRIME,
+    POSITIVE: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_HELPURL_POSITIVE,
+    NEGATIVE: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_HELPURL_NEGATIVE,
+    WHOLE: Blockly.Msg.LANG_MATH_NUMBER_PROPERTY_HELPURL_WHOLE
+  }
+};
+
 Blockly.Blocks['math_is_a_number'] = {
   category : 'Math',
   helpUrl: function() {

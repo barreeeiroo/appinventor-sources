@@ -1057,6 +1057,33 @@
            "Bad number of decimal places for format as decimal"))))
 
 
+;;; Number property checks — return explicit #t or #f
+
+(define (is-even? n)
+  (if (even? (inexact->exact (truncate n))) #t #f))
+
+(define (is-odd? n)
+  (if (odd? (inexact->exact (truncate n))) #t #f))
+
+(define (is-prime? n)
+  (let ((n (inexact->exact (truncate n))))
+    (cond ((<= n 1) #f)
+          ((<= n 3) #t)
+          ((or (zero? (modulo n 2)) (zero? (modulo n 3))) #f)
+          (else (let loop ((i 5))
+                  (cond ((> (* i i) n) #t)
+                        ((or (zero? (modulo n i)) (zero? (modulo n (+ i 2)))) #f)
+                        (else (loop (+ i 6)))))))))
+
+(define (is-positive? n)
+  (if (> n 0) #t #f))
+
+(define (is-negative? n)
+  (if (< n 0) #t #f))
+
+(define (is-whole? n)
+  (if (= n (truncate n)) #t #f))
+
 ;;; We need to explicitly return #t or #f because the value
 ;;; gets passed to a receiving block.
 (define (is-number? arg)
